@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwiftTrack – Client Portal</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+        
+        /* Header */
+        .header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+        .header h1 { font-size: 1.4rem; }
+        .header .logo { display: flex; align-items: center; gap: .6rem; }
+        .header .logo svg { width: 28px; height: 28px; }
+        .header .user-info { display: flex; align-items: center; gap: 1rem; }
+        .header .user-info span { font-size: .9rem; opacity: .9; }
+        .ws-status { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .ws-status.connected { background: #4ade80; }
+        .ws-status.disconnected { background: #f87171; }
+        .btn { padding: .5rem 1.2rem; border: none; border-radius: 6px; font-size: .85rem; cursor: pointer; transition: all .2s; font-weight: 500; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-sm { padding: .3rem .8rem; font-size: .8rem; }
+
+        /* Layout */
+        .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+        
+        /* Login */
+        .login-container { display: flex; justify-content: center; align-items: center; min-height: 80vh; }
+        .login-card { background: var(--card); padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,.08); width: 380px; }
+        .login-card h2 { margin-bottom: 1.5rem; text-align: center; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: .3rem; font-size: .85rem; color: var(--text-light); font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: .6rem; border: 1px solid var(--border); border-radius: 6px; font-size: .9rem; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+        .login-card .btn { width: 100%; padding: .7rem; font-size: 1rem; }
+        .login-hint { margin-top: 1rem; font-size: .8rem; color: var(--text-light); text-align: center; }
+
+        /* Dashboard */
+        .dashboard { display: none; }
+        .dashboard.active { display: block; }
+        .tabs { display: flex; gap: .5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); padding-bottom: .5rem; }
+        .tab { padding: .5rem 1.2rem; border: none; background: none; cursor: pointer; font-size: .9rem; color: var(--text-light); border-radius: 6px 6px 0 0; }
+        .tab.active { background: var(--primary); color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Cards */
+        .card { background: var(--card); border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,.05); padding: 1.5rem; margin-bottom: 1rem; border: 1px solid var(--border); }
+        .card h3 { font-size: 1rem; margin-bottom: 1rem; color: var(--primary); }
+        
+        /* Orders Table */
+        .orders-table { width: 100%; border-collapse: collapse; }
+        .orders-table th, .orders-table td { padding: .6rem .8rem; text-align: left; border-bottom: 1px solid var(--border); font-size: .85rem; }
+        .orders-table th { background: var(--bg); font-weight: 600; color: var(--text-light); }
+        .status-badge { padding: .2rem .6rem; border-radius: 12px; font-size: .75rem; font-weight: 600; }
+        .status-ACCEPTED, .status-PROCESSING { background: #dbeafe; color: #1d4ed8; }
+        .status-IN_WAREHOUSE { background: #fef3c7; color: #b45309; }
+        .status-IN_TRANSIT, .status-LOADED { background: #d1fae5; color: #059669; }
+        .status-DELIVERED { background: #16a34a; color: white; }
+        .status-FAILED, .status-CANCELLED { background: #fee2e2; color: #dc2626; }
+        .status-PENDING, .status-QUEUED { background: #f1f5f9; color: #64748b; }
+
+        /* Live feed */
+        .live-feed { max-height: 300px; overflow-y: auto; }
+        .feed-item { padding: .6rem; border-left: 3px solid var(--primary); margin-bottom: .5rem; background: var(--bg); border-radius: 0 6px 6px 0; font-size: .85rem; }
+        .feed-item .time { color: var(--text-light); font-size: .75rem; }
+        
+        /* Stats */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-card { background: var(--card); border-radius: 10px; padding: 1.2rem; text-align: center; border: 1px solid var(--border); }
+        .stat-card .value { font-size: 2rem; font-weight: 700; color: var(--primary); }
+        .stat-card .label { font-size: .8rem; color: var(--text-light); margin-top: .3rem; }
+
+        /* Order form grid */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-grid .full { grid-column: 1 / -1; }
+        .items-list { margin: .5rem 0; }
+        .item-row { display: flex; gap: .5rem; align-items: center; margin-bottom: .3rem; }
+        .item-row input { flex: 1; }
+
+        /* Notification toast */
+        .toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 1000; }
+        .toast { background: var(--card); padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,.15); margin-bottom: .5rem; animation: slideIn .3s ease; border-left: 4px solid var(--primary); max-width: 350px; }
+        .toast.success { border-left-color: var(--success); }
+        .toast.error { border-left-color: var(--danger); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Login Screen -->
+<div id="loginScreen">
+    <div class="header">
+        <div class="logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <h1>SwiftTrack</h1>
+        </div>
+        <span style="opacity:.8">Client Portal</span>
+    </div>
+    <div class="login-container">
+        <div class="login-card">
+            <h2>🔐 Sign In</h2>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="loginUsername" placeholder="e.g. megamart" value="megamart">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="Password" value="pass123">
+            </div>
+            <button class="btn btn-primary" onclick="login()">Sign In</button>
+            <p class="login-hint">Demo accounts: megamart / shopeasy / freshgrocer (pass: pass123)</p>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" class="dashboard">
+    <div class="header">
+        <div class="logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <h1>SwiftTrack</h1>
+        </div>
+        <div class="user-info">
+            <span class="ws-status disconnected" id="wsStatus" title="WebSocket status"></span>
+            <span id="userName"></span>
+            <button class="btn btn-danger btn-sm" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card"><div class="value" id="statTotal">0</div><div class="label">Total Orders</div></div>
+            <div class="stat-card"><div class="value" id="statProcessing">0</div><div class="label">Processing</div></div>
+            <div class="stat-card"><div class="value" id="statDelivered">0</div><div class="label">Delivered</div></div>
+            <div class="stat-card"><div class="value" id="statFailed">0</div><div class="label">Failed</div></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('orders', event)">📦 My Orders</button>
+            <button class="tab" onclick="switchTab('neworder', event)">➕ New Order</button>
+            <button class="tab" onclick="switchTab('tracking', event)">📡 Live Tracking</button>
+        </div>
+
+        <!-- Orders Tab -->
+        <div class="tab-content active" id="tab-orders">
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+                    <h3>📋 Order History</h3>
+                    <button class="btn btn-primary btn-sm" onclick="loadOrders()">🔄 Refresh</button>
+                </div>
+                <table class="orders-table">
+                    <thead>
+                        <tr><th>Order ID</th><th>Recipient</th><th>Address</th><th>Status</th><th>Priority</th><th>Created</th></tr>
+                    </thead>
+                    <tbody id="ordersBody">
+                        <tr><td colspan="6" style="text-align:center;color:var(--text-light);">No orders yet. Submit your first order!</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- New Order Tab -->
+        <div class="tab-content" id="tab-neworder">
+            <div class="card">
+                <h3>📝 Submit New Delivery Order</h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Recipient Name</label>
+                        <input type="text" id="recipientName" placeholder="e.g. John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select id="priority">
+                            <option value="normal">Normal</option>
+                            <option value="express">Express</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Street Address</label>
+                        <input type="text" id="deliveryStreet" placeholder="e.g. 42 Galle Road">
+                    </div>
+                    <div class="form-group">
+                        <label>City</label>
+                        <input type="text" id="deliveryCity" placeholder="e.g. Colombo">
+                    </div>
+                    <div class="form-group">
+                        <label>Postal Code</label>
+                        <input type="text" id="deliveryPostal" placeholder="e.g. 00300">
+                    </div>
+                    <div class="form-group">
+                        <label>Item Description</label>
+                        <input type="text" id="itemDesc" placeholder="e.g. Electronics Package">
+                    </div>
+                    <div class="form-group">
+                        <label>Quantity</label>
+                        <input type="number" id="itemQty" value="1" min="1">
+                    </div>
+                    <div class="form-group">
+                        <label>Weight (kg)</label>
+                        <input type="number" id="itemWeight" value="1.0" step="0.1" min="0.1">
+                    </div>
+                    <div class="full" style="display:flex;gap:1rem;">
+                        <button class="btn btn-primary" onclick="submitOrder(false)">📤 Submit Order</button>
+                        <button class="btn" style="background:#f1f5f9;" onclick="submitOrder(true)">⚡ Submit Async (High Volume)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Tracking Tab -->
+        <div class="tab-content" id="tab-tracking">
+            <div class="card">
+                <h3>📡 Real-Time Event Feed <span class="ws-status" id="wsStatus2"></span></h3>
+                <div class="live-feed" id="liveFeed">
+                    <div class="feed-item">
+                        <div class="time">Waiting for events...</div>
+                        <div>Connect to receive real-time order updates</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── State ─────────────────────────────────────────────
+let token = null;
+let userId = null;
+let userRole = null;
+let userName = null;
+let ws = null;
+
+const API = '';  // Same origin
+
+// ── Toast Notifications ───────────────────────────────
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<strong>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</strong> ${message}`;
+    container.appendChild(toast);
+    setTimeout(() => toast.remove(), 5000);
+}
+
+// ── Auth ──────────────────────────────────────────────
+async function login() {
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+    try {
+        const resp = await fetch(`${API}/api/v1/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+        });
+        if (!resp.ok) throw new Error('Invalid credentials');
+        const data = await resp.json();
+        token = data.access_token;
+        userId = data.user_id;
+        userRole = data.role;
+        userName = data.name;
+
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('dashboard').classList.add('active');
+        document.getElementById('userName').textContent = `${userName} (${userId})`;
+
+        connectWebSocket();
+        loadOrders();
+        showToast(`Welcome, ${userName}!`, 'success');
+    } catch (err) {
+        showToast(err.message, 'error');
+    }
+}
+
+function logout() {
+    token = null;
+    if (ws) ws.close();
+    document.getElementById('loginScreen').style.display = '';
+    document.getElementById('dashboard').classList.remove('active');
+}
+
+function authHeaders() {
+    return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+}
+
+// ── Tabs ──────────────────────────────────────────────
+function switchTab(tab, evt) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    if (evt && evt.target) {
+        evt.target.classList.add('active');
+    } else {
+        // Programmatic call – highlight the matching tab button
+        document.querySelectorAll('.tab').forEach(t => {
+            if (t.textContent.toLowerCase().includes(tab)) t.classList.add('active');
+        });
+    }
+    document.getElementById(`tab-${tab}`).classList.add('active');
+}
+
+// ── Load Orders ───────────────────────────────────────
+async function loadOrders() {
+    try {
+        const resp = await fetch(`${API}/api/v1/orders/client/${userId}`, { headers: authHeaders() });
+        const data = await resp.json();
+        const orders = data.orders || [];
+        
+        // Update stats
+        document.getElementById('statTotal').textContent = orders.length;
+        document.getElementById('statProcessing').textContent = orders.filter(o => ['PROCESSING','IN_WAREHOUSE','IN_TRANSIT','ACCEPTED'].includes(o.status)).length;
+        document.getElementById('statDelivered').textContent = orders.filter(o => o.status === 'DELIVERED').length;
+        document.getElementById('statFailed').textContent = orders.filter(o => ['FAILED','CANCELLED'].includes(o.status)).length;
+
+        // Update table
+        const tbody = document.getElementById('ordersBody');
+        if (orders.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-light);">No orders yet</td></tr>';
+            return;
+        }
+        tbody.innerHTML = orders.map(o => `
+            <tr>
+                <td><strong>${o.order_id || '-'}</strong></td>
+                <td>${o.recipient_name || '-'}</td>
+                <td>${o.delivery_address || '-'}</td>
+                <td><span class="status-badge status-${o.status}">${o.status}</span></td>
+                <td>${o.priority || '-'}</td>
+                <td>${o.created_at ? new Date(o.created_at).toLocaleString() : '-'}</td>
+            </tr>
+        `).join('');
+    } catch (err) {
+        showToast('Failed to load orders: ' + err.message, 'error');
+    }
+}
+
+// ── Submit Order ──────────────────────────────────────
+async function submitOrder(async_mode) {
+    const order = {
+        client_id: userId,
+        recipient_name: document.getElementById('recipientName').value,
+        delivery_street: document.getElementById('deliveryStreet').value,
+        delivery_city: document.getElementById('deliveryCity').value,
+        delivery_postal_code: document.getElementById('deliveryPostal').value,
+        items: [{
+            description: document.getElementById('itemDesc').value || 'Package',
+            quantity: parseInt(document.getElementById('itemQty').value) || 1,
+            weight_kg: parseFloat(document.getElementById('itemWeight').value) || 1.0,
+        }],
+        priority: document.getElementById('priority').value,
+    };
+
+    if (!order.recipient_name || !order.delivery_street || !order.delivery_city) {
+        showToast('Please fill in all required fields', 'error');
+        return;
+    }
+
+    const endpoint = async_mode ? '/api/v1/orders/async' : '/api/v1/orders';
+    try {
+        const resp = await fetch(`${API}${endpoint}`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify(order),
+        });
+        const data = await resp.json();
+        if (data.status === 'COMPLETED' || data.status === 'QUEUED') {
+            showToast(`Order ${data.order_id || data.saga_id} ${data.status.toLowerCase()}!`, 'success');
+            switchTab('orders');
+            setTimeout(loadOrders, 500);
+        } else {
+            showToast(`Order failed: ${data.message}`, 'error');
+        }
+    } catch (err) {
+        showToast('Failed to submit order: ' + err.message, 'error');
+    }
+}
+
+// ── WebSocket Real-Time Tracking ──────────────────────
+function connectWebSocket() {
+    const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${location.host}/ws/tracking?token=${token}`;
+    
+    ws = new WebSocket(wsUrl);
+    
+    ws.onopen = () => {
+        document.getElementById('wsStatus').className = 'ws-status connected';
+        document.getElementById('wsStatus2').className = 'ws-status connected';
+        console.log('[WS] Connected');
+    };
+    
+    ws.onclose = () => {
+        document.getElementById('wsStatus').className = 'ws-status disconnected';
+        document.getElementById('wsStatus2').className = 'ws-status disconnected';
+        console.log('[WS] Disconnected. Reconnecting in 3s...');
+        setTimeout(connectWebSocket, 3000);
+    };
+    
+    ws.onmessage = (event) => {
+        try {
+            const data = JSON.parse(event.data);
+            addFeedItem(data);
+
+            // Refresh orders when status changes
+            if (data.event_type && data.event_type.includes('status_change')) {
+                loadOrders();
+            }
+
+            // Show toast for important events
+            if (data.status === 'DELIVERED') {
+                showToast(`📦 Order ${data.order_id} delivered!`, 'success');
+            } else if (data.status === 'FAILED') {
+                showToast(`⚠️ Order ${data.order_id} delivery failed`, 'error');
+            }
+        } catch (e) {}
+    };
+    
+    // Keep alive
+    setInterval(() => { if (ws && ws.readyState === WebSocket.OPEN) ws.send('ping'); }, 30000);
+}
+
+function addFeedItem(data) {
+    const feed = document.getElementById('liveFeed');
+    const item = document.createElement('div');
+    item.className = 'feed-item';
+    const time = new Date().toLocaleTimeString();
+    item.innerHTML = `
+        <div class="time">${time}</div>
+        <div><strong>${data.event_type || 'event'}</strong>: ${data.message || JSON.stringify(data)}</div>
+        ${data.order_id ? `<div style="font-size:.8rem;color:var(--text-light);">Order: ${data.order_id} | Status: <span class="status-badge status-${data.status}">${data.status || '-'}</span></div>` : ''}
+    `;
+    feed.insertBefore(item, feed.firstChild);
+    // Keep max 50 items
+    while (feed.children.length > 50) feed.removeChild(feed.lastChild);
+}
+</script>
+</body>
+</html>

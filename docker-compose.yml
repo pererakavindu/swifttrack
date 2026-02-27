@@ -1,0 +1,136 @@
+services:
+  # ─────────────────────────────────────────
+  # Infrastructure
+  # ─────────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: swifttrack-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - swiftnet
+
+  redis:
+    image: redis:7-alpine
+    container_name: swifttrack-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - swiftnet
+
+  # ─────────────────────────────────────────
+  # Mock Back-End Systems
+  # ─────────────────────────────────────────
+  mock-cms:
+    build: ./mock-cms
+    container_name: swifttrack-mock-cms
+    ports:
+      - "8005:8005"
+    networks:
+      - swiftnet
+
+  mock-ros:
+    build: ./mock-ros
+    container_name: swifttrack-mock-ros
+    ports:
+      - "8003:8003"
+    networks:
+      - swiftnet
+
+  mock-wms:
+    build: ./mock-wms
+    container_name: swifttrack-mock-wms
+    ports:
+      - "9000:9000"
+    networks:
+      - swiftnet
+
+  # ─────────────────────────────────────────
+  # Protocol Adapters
+  # ─────────────────────────────────────────
+  cms-adapter:
+    build: ./adapters/cms-adapter
+    container_name: swifttrack-cms-adapter
+    ports:
+      - "8002:8002"
+    env_file: .env
+    depends_on:
+      mock-cms:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - swiftnet
+
+  wms-adapter:
+    build: ./adapters/wms-adapter
+    container_name: swifttrack-wms-adapter
+    ports:
+      - "8004:8004"
+    env_file: .env
+    depends_on:
+      mock-wms:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - swiftnet
+
+  # ─────────────────────────────────────────
+  # Core Middleware
+  # ─────────────────────────────────────────
+  orchestrator:
+    build: ./orchestrator
+    container_name: swifttrack-orchestrator
+    ports:
+      - "8001:8001"
+    env_file: .env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      cms-adapter:
+        condition: service_started
+      wms-adapter:
+        condition: service_started
+      mock-ros:
+        condition: service_started
+    networks:
+      - swiftnet
+
+  gateway:
+    build: ./gateway
+    container_name: swifttrack-gateway
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      orchestrator:
+        condition: service_started
+    networks:
+      - swiftnet
+
+networks:
+  swiftnet:
+    driver: bridge
