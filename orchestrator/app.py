@@ -158,6 +158,7 @@ async def execute_order_saga(saga_id: str, req: SubmitOrderRequest) -> dict:
     """
     total_weight = sum(item.weight_kg * item.quantity for item in req.items)
     total_items = sum(item.quantity for item in req.items)
+    items_desc = "; ".join(f"{item.description} (x{item.quantity}, {item.weight_kg}kg)" for item in req.items)
 
     saga = {
         "saga_id": saga_id,
@@ -182,6 +183,9 @@ async def execute_order_saga(saga_id: str, req: SubmitOrderRequest) -> dict:
             "client_id": req.client_id,
             "recipient_name": req.recipient_name,
             "delivery_address": f"{req.delivery_street}, {req.delivery_city}",
+            "items": items_desc,
+            "total_weight_kg": str(total_weight),
+            "item_count": str(total_items),
             "status": "PENDING",
             "priority": req.priority,
             "created_at": saga["created_at"],
@@ -225,6 +229,9 @@ async def execute_order_saga(saga_id: str, req: SubmitOrderRequest) -> dict:
                 "client_id": req.client_id,
                 "recipient_name": req.recipient_name,
                 "delivery_address": f"{req.delivery_street}, {req.delivery_city}",
+                "items": items_desc,
+                "total_weight_kg": str(total_weight),
+                "item_count": str(total_items),
                 "status": "ACCEPTED",
                 "priority": req.priority,
                 "created_at": saga["created_at"],
@@ -351,7 +358,7 @@ async def execute_order_saga(saga_id: str, req: SubmitOrderRequest) -> dict:
                 "priority": req.priority,
                 "new_stop": new_stop,
                 "total_stops": len(change_result.get("updated_stops", [])),
-                "message": f"🚨 New {'HIGH-PRIORITY ' if req.priority == 'high' else ''}delivery added to your route: {req.delivery_street}, {req.delivery_city}",
+                "message": f"New {'HIGH-PRIORITY ' if req.priority == 'high' else ''}delivery added to your route: {req.delivery_street}, {req.delivery_city}",
                 "timestamp": datetime.utcnow().isoformat(),
             })
 

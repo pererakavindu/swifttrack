@@ -141,23 +141,23 @@
 <!-- Route Change Alert Overlay -->
 <div class="route-change-overlay" id="routeChangeOverlay">
     <div class="route-change-alert" id="routeChangeAlert">
-        <div class="alert-icon" id="rcIcon">🔀</div>
+        <div class="alert-icon" id="rcIcon"></div>
         <div class="alert-title" id="rcTitle">Route Updated</div>
         <div class="alert-msg" id="rcMessage">Your route has been updated with a new delivery stop.</div>
         <div class="alert-detail" id="rcDetail">
             <div class="label">New Stop</div>
             <div id="rcAddress">Loading...</div>
         </div>
-        <button class="dismiss-btn" onclick="dismissRouteChange()">👍 Got it — View Updated Route</button>
+        <button class="dismiss-btn" onclick="dismissRouteChange()">Got it — View Updated Route</button>
     </div>
 </div>
 
 <!-- Login -->
 <div id="loginScreen">
-    <div class="header"><h1>🚚 SwiftTrack Driver</h1></div>
+    <div class="header"><h1>SwiftTrack Driver</h1></div>
     <div class="login-wrap">
         <div class="login-card">
-            <h2>🔐 Driver Sign-In</h2>
+            <h2>Driver Sign-In</h2>
             <div class="form-group"><label>Username</label><input id="loginUser" value="driver1" placeholder="e.g. driver1"></div>
             <div class="form-group"><label>Password</label><input id="loginPass" type="password" value="pass123"></div>
             <button class="btn btn-primary" onclick="login()">Sign In</button>
@@ -170,7 +170,7 @@
 <div id="dashboard" class="dashboard">
     <div class="header">
         <div style="display:flex;align-items:center;gap:.5rem;">
-            <h1>🚚 SwiftTrack</h1>
+            <h1>SwiftTrack</h1>
             <span class="live-badge" id="liveBadge" style="display:none;"><span class="dot"></span> LIVE</span>
         </div>
         <div class="header-right">
@@ -187,12 +187,12 @@
     </div>
 
     <div class="section">
-        <h3>📍 Delivery Manifest</h3>
+        <h3>Delivery Manifest</h3>
         <div id="manifest"><p style="color:var(--text-light);font-size:.85rem;">Loading manifest...</p></div>
     </div>
 
     <div class="section">
-        <h3>📡 Notifications</h3>
+        <h3>Notifications</h3>
         <div class="notif-list" id="notifList">
             <div class="notif"><div class="t">Waiting...</div><div>Events will appear here in real-time</div></div>
         </div>
@@ -203,7 +203,7 @@
 <div class="modal-overlay" id="podModal">
     <div class="modal">
         <h3>
-            <span id="podTitle">📋 Proof of Delivery</span>
+            <span id="podTitle">Proof of Delivery</span>
             <button class="close-btn" onclick="closePodModal()">&times;</button>
         </h3>
         <div style="font-size:.85rem;color:var(--text-light);margin-bottom:1rem;">
@@ -211,15 +211,15 @@
         </div>
 
         <div class="pod-tabs">
-            <div class="pod-tab active" onclick="switchPodTab('signature', event)">✍️ Signature</div>
-            <div class="pod-tab" onclick="switchPodTab('photo', event)">📸 Photo</div>
+            <div class="pod-tab active" onclick="switchPodTab('signature', event)">Signature</div>
+            <div class="pod-tab" onclick="switchPodTab('photo', event)">Photo</div>
         </div>
 
         <div class="pod-tab-content active" id="podTab-signature">
             <p style="font-size:.78rem;color:var(--text-light);margin-bottom:.4rem;">Customer signs below:</p>
             <canvas class="sig-canvas" id="sigCanvas" width="400" height="180"></canvas>
             <div class="sig-actions">
-                <button class="btn btn-sm" style="background:#f1f5f9;" onclick="clearSignature()">🗑️ Clear</button>
+                <button class="btn btn-sm" style="background:#f1f5f9;" onclick="clearSignature()">Clear</button>
                 <span id="sigStatus" style="font-size:.75rem;color:var(--text-light);margin-left:auto;line-height:2;">No signature</span>
             </div>
         </div>
@@ -228,8 +228,8 @@
             <div class="photo-area">
                 <img id="photoPreview" class="photo-preview">
                 <div class="camera-btns">
-                    <button class="btn btn-primary btn-sm" onclick="document.getElementById('cameraInput').click()">📷 Take Photo</button>
-                    <button class="btn btn-sm" style="background:#f1f5f9;" onclick="clearPhoto()">🗑️ Remove</button>
+                    <button class="btn btn-primary btn-sm" onclick="document.getElementById('cameraInput').click()">Take Photo</button>
+                    <button class="btn btn-sm" style="background:#f1f5f9;" onclick="clearPhoto()">Remove</button>
                 </div>
                 <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handlePhoto(event)">
             </div>
@@ -238,12 +238,12 @@
         <textarea class="pod-notes" id="podNotes" placeholder="Delivery notes (optional)... e.g. Left at front door"></textarea>
 
         <div class="proof-indicator" id="proofIndicator">
-            <span id="indSig">✍️ No signature</span>
-            <span id="indPhoto">📷 No photo</span>
+            <span id="indSig">No signature</span>
+            <span id="indPhoto">No photo</span>
         </div>
 
         <div class="pod-submit-area">
-            <button class="btn btn-primary" id="podConfirmBtn" onclick="submitDeliveryWithProof()">✅ Confirm Delivery</button>
+            <button class="btn btn-primary" id="podConfirmBtn" onclick="submitDeliveryWithProof()">Confirm Delivery</button>
             <button class="btn" style="background:#f1f5f9;" onclick="closePodModal()">Cancel</button>
         </div>
     </div>
@@ -336,17 +336,17 @@ async function loadManifest() {
             const newStopCls = isNewStop ? `new-stop ${s.priority === 'high' ? 'high-priority-stop' : ''}` : '';
             const hasPod = s.has_signature === 'true' || s.has_photo === 'true';
             return `<div class="stop-card ${cls} ${flash} ${newStopCls}" data-oid="${s.order_id}">
-                <div class="oid">Stop ${i+1}: ${s.order_id}${isNewStop ? ' <span style="font-size:.7rem;color:#f59e0b;font-weight:700;">🆕 NEW</span>' : ''}${s.priority === 'high' ? ' <span class="priority-badge">HIGH</span>' : ''}</div>
-                <div class="addr">📍 ${s.delivery_address || 'Address pending'}</div>
-                ${s.recipient_name ? `<div style="font-size:.78rem;color:var(--text-light);">👤 ${s.recipient_name}</div>` : ''}
+                <div class="oid">Stop ${i+1}: ${s.order_id}${isNewStop ? ' <span style="font-size:.7rem;color:#f59e0b;font-weight:700;">NEW</span>' : ''}${s.priority === 'high' ? ' <span class="priority-badge">HIGH</span>' : ''}</div>
+                <div class="addr">${s.delivery_address || 'Address pending'}</div>
+                ${s.recipient_name ? `<div style="font-size:.78rem;color:var(--text-light);">${s.recipient_name}</div>` : ''}
                 <div class="bottom">
                     <span class="status-badge status-${s.status}">${s.status}</span>
                     ${s.status === 'DELIVERED' || s.status === 'FAILED' ? `
-                        ${hasPod ? '<span style="font-size:.7rem;color:var(--primary);">📋 POD attached</span>' : ''}
+                        ${hasPod ? '<span style="font-size:.7rem;color:var(--primary);">POD attached</span>' : ''}
                     ` : `
                         <div>
-                            <button class="btn btn-primary btn-sm" onclick="openPodModal('${s.order_id}','DELIVERED')">✅ Delivered</button>
-                            <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;" onclick="openPodModal('${s.order_id}','FAILED')">❌ Failed</button>
+                            <button class="btn btn-primary btn-sm" onclick="openPodModal('${s.order_id}','DELIVERED')">Delivered</button>
+                            <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;" onclick="openPodModal('${s.order_id}','FAILED')">Failed</button>
                         </div>
                     `}
                 </div>
@@ -471,16 +471,31 @@ function openPodModal(oid, result) {
     podResult = result;
     document.getElementById('podOrderId').textContent = oid;
     const isDelivered = result === 'DELIVERED';
-    document.getElementById('podTitle').textContent = isDelivered ? '📋 Proof of Delivery' : '❌ Report Failed Delivery';
-    document.getElementById('podConfirmBtn').textContent = isDelivered ? '✅ Confirm Delivery' : '❌ Confirm Failed';
+    document.getElementById('podTitle').textContent = isDelivered ? 'Proof of Delivery' : 'Report Failed Delivery';
+    document.getElementById('podConfirmBtn').textContent = isDelivered ? 'Confirm Delivery' : 'Confirm Failed';
     document.getElementById('podConfirmBtn').className = isDelivered ? 'btn btn-primary' : 'btn btn-danger';
 
     // Reset
     clearSignature();
     clearPhoto();
     document.getElementById('podNotes').value = '';
-    switchPodTab('signature', null);
-    document.querySelectorAll('.pod-tab')[0].classList.add('active');
+
+    // For FAILED: hide signature/photo tabs, show only notes
+    // For DELIVERED: show signature/photo tabs, require at least one for confirmation
+    const podTabsEl = document.querySelector('.pod-tabs');
+    const proofInd = document.getElementById('proofIndicator');
+    if (isDelivered) {
+        podTabsEl.style.display = 'flex';
+        proofInd.style.display = 'flex';
+        switchPodTab('signature', null);
+        document.querySelectorAll('.pod-tab')[0].classList.add('active');
+    } else {
+        podTabsEl.style.display = 'none';
+        proofInd.style.display = 'none';
+        // Hide all tab contents for failed
+        document.querySelectorAll('.pod-tab-content').forEach(t => t.classList.remove('active'));
+    }
+
     updateProofIndicators();
 
     document.getElementById('podModal').classList.add('open');
@@ -494,19 +509,33 @@ function closePodModal() {
 
 function updateProofIndicators() {
     document.getElementById('indSig').innerHTML = hasSig
-        ? '<span class="check">✅</span> Signature captured'
-        : '✍️ No signature';
+        ? '<span class="check">&#10003;</span> Signature captured'
+        : 'No signature';
     document.getElementById('indPhoto').innerHTML = photoBase64
-        ? '<span class="check">✅</span> Photo attached'
-        : '📷 No photo';
-    document.getElementById('sigStatus').textContent = hasSig ? '✅ Signature captured' : 'No signature';
+        ? '<span class="check">&#10003;</span> Photo attached'
+        : 'No photo';
+    document.getElementById('sigStatus').textContent = hasSig ? 'Signature captured' : 'No signature';
+
+    // For DELIVERED: require at least signature or photo to enable confirm
+    const btn = document.getElementById('podConfirmBtn');
+    if (podResult === 'DELIVERED') {
+        const hasProof = hasSig || !!photoBase64;
+        btn.disabled = !hasProof;
+        btn.style.opacity = hasProof ? '1' : '0.5';
+        btn.title = hasProof ? '' : 'Please capture a signature or photo before confirming';
+    } else {
+        // FAILED: always enabled (no proof needed)
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.title = '';
+    }
 }
 
 async function submitDeliveryWithProof() {
     if (!podOrderId) return;
     const btn = document.getElementById('podConfirmBtn');
     btn.disabled = true;
-    btn.textContent = '⏳ Submitting...';
+    btn.textContent = 'Submitting...';
 
     const payload = {
         order_id: podOrderId,
@@ -533,7 +562,7 @@ async function submitDeliveryWithProof() {
         showToast('Failed: ' + e.message, 'error');
     } finally {
         btn.disabled = false;
-        btn.textContent = podResult === 'DELIVERED' ? '✅ Confirm Delivery' : '❌ Confirm Failed';
+        btn.textContent = podResult === 'DELIVERED' ? 'Confirm Delivery' : 'Confirm Failed';
     }
 }
 
@@ -566,10 +595,10 @@ function connectWebSocket() {
             addNotif(data);
             if (data.event_type) debouncedReload();
             const s = data.status, oid = data.order_id || '';
-            if (s === 'DELIVERED')       showToast(`✅ ${oid} delivered!`, 'success');
-            else if (s === 'FAILED')     showToast(`❌ ${oid} failed`, 'error');
-            else if (s === 'IN_TRANSIT') showToast(`🚚 ${oid} in transit`, 'info');
-            else if (s === 'IN_WAREHOUSE') showToast(`📦 ${oid} in warehouse`, 'info');
+            if (s === 'DELIVERED')       showToast(`${oid} delivered!`, 'success');
+            else if (s === 'FAILED')     showToast(`${oid} failed`, 'error');
+            else if (s === 'IN_TRANSIT') showToast(`${oid} in transit`, 'info');
+            else if (s === 'IN_WAREHOUSE') showToast(`${oid} in warehouse`, 'info');
         } catch(_) {}
     };
 
@@ -590,7 +619,7 @@ function addNotif(data) {
     const isRouteChange = data.event_type === 'route.change';
     n.className = `notif ${isAlert ? 'alert' : ''}`;
     n.innerHTML = `<div class="t">${new Date().toLocaleTimeString()}</div>
-        <div><strong>${isRouteChange ? '🔀 ROUTE CHANGE' : (data.event_type || 'event')}</strong>: ${data.message || JSON.stringify(data)}</div>
+        <div><strong>${isRouteChange ? 'ROUTE CHANGE' : (data.event_type || 'event')}</strong>: ${data.message || JSON.stringify(data)}</div>
         ${data.order_id ? `<div style="font-size:.75rem;color:var(--text-light);">${data.order_id} → <span class="status-badge status-${data.status || 'PROCESSING'}">${data.status || data.change_type || '-'}</span>${data.priority === 'high' ? ' <span class="priority-badge">HIGH PRIORITY</span>' : ''}</div>` : ''}`;
     list.insertBefore(n, list.firstChild);
     while (list.children.length > 40) list.removeChild(list.lastChild);
@@ -607,9 +636,9 @@ function handleRouteChange(data) {
     const alert = document.getElementById('routeChangeAlert');
 
     // Set alert content
-    document.getElementById('rcIcon').textContent = isHigh ? '🚨' : '🔀';
+    document.getElementById('rcIcon').textContent = isHigh ? '!' : '';
     document.getElementById('rcTitle').textContent = isHigh
-        ? '⚡ HIGH-PRIORITY Route Change!'
+        ? 'HIGH-PRIORITY Route Change!'
         : 'Route Updated — New Stop Added';
     document.getElementById('rcMessage').textContent = data.message || 'A new delivery has been added to your route.';
 
@@ -618,7 +647,7 @@ function handleRouteChange(data) {
     const detailEl = document.getElementById('rcDetail');
     detailEl.innerHTML = `
         <div class="label">New Delivery${isHigh ? ' — HIGH PRIORITY' : ''}</div>
-        <div style="font-weight:600;">📍 ${newStop.street || 'Unknown'}, ${newStop.city || ''}</div>
+        <div style="font-weight:600;">${newStop.street || 'Unknown'}, ${newStop.city || ''}</div>
         <div style="font-size:.78rem;color:var(--text-light);margin-top:.3rem;">
             Order: ${data.order_id || 'N/A'} &middot; ETA: ${newStop.estimated_arrival || 'TBD'}
             &middot; Route now has <strong>${data.total_stops || '?'}</strong> stops
