@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SwiftTrack – Middleware Architecture Documentation</title>
+<style>
+  @page { size: A4; margin: 2cm 2.5cm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Georgia', 'Times New Roman', serif; font-size: 11.5pt; line-height: 1.7; color: #1a1a1a; max-width: 210mm; margin: 0 auto; padding: 2cm 2.5cm; background: #fff; }
+
+  /* ── Cover Page ── */
+  .cover { page-break-after: always; text-align: center; padding-top: 6cm; min-height: 100vh; }
+  .cover .university { font-size: 13pt; color: #444; letter-spacing: 0.5pt; text-transform: uppercase; }
+  .cover .module { font-size: 12pt; color: #555; margin-top: .5cm; }
+  .cover .title { font-size: 28pt; font-weight: bold; color: #1a3a6e; margin: 2cm 0 0.5cm; line-height: 1.3; }
+  .cover .subtitle { font-size: 16pt; color: #2563eb; margin-bottom: 2cm; }
+  .cover .meta { font-size: 10.5pt; color: #555; line-height: 2; }
+  .cover .meta strong { color: #333; }
+  .cover-logo { font-size: 48pt; margin-bottom: 1cm; }
+
+  /* ── TOC ── */
+  .toc { page-break-after: always; }
+  .toc h2 { text-align: center; margin-bottom: 1cm; }
+  .toc-list { list-style: none; }
+  .toc-list li { padding: .3cm 0; border-bottom: 1px dotted #ccc; display: flex; justify-content: space-between; }
+  .toc-list li span.num { font-weight: bold; color: #1a3a6e; min-width: 2cm; }
+
+  /* ── Sections ── */
+  h1 { font-size: 20pt; color: #1a3a6e; border-bottom: 3px solid #2563eb; padding-bottom: .3cm; margin: 1.2cm 0 .6cm; page-break-after: avoid; }
+  h2 { font-size: 15pt; color: #1a3a6e; margin: .8cm 0 .4cm; page-break-after: avoid; }
+  h3 { font-size: 12.5pt; color: #2563eb; margin: .6cm 0 .3cm; page-break-after: avoid; }
+  p { margin-bottom: .4cm; text-align: justify; }
+  ul, ol { margin: .3cm 0 .5cm 1.2cm; }
+  li { margin-bottom: .2cm; }
+
+  table { width: 100%; border-collapse: collapse; margin: .5cm 0; font-size: 10.5pt; }
+  th { background: #1a3a6e; color: #fff; padding: .3cm .4cm; text-align: left; font-weight: 600; }
+  td { padding: .25cm .4cm; border-bottom: 1px solid #ddd; vertical-align: top; }
+  tr:nth-child(even) { background: #f5f7fa; }
+  caption { font-weight: bold; margin-bottom: .3cm; text-align: left; font-size: 10pt; color: #555; }
+
+  code { font-family: 'Consolas', 'Courier New', monospace; font-size: 10pt; background: #f1f5f9; padding: 1px 4px; border-radius: 3px; }
+  pre { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: .5cm; font-size: 9.5pt; overflow-x: auto; margin: .4cm 0 .6cm; line-height: 1.5; font-family: 'Consolas', monospace; }
+
+  .page-break { page-break-before: always; }
+  .fig { text-align: center; margin: .6cm 0; page-break-inside: avoid; }
+  .fig-caption { font-size: 10pt; color: #555; font-style: italic; margin-top: .3cm; }
+  .highlight { background: #eff6ff; border-left: 4px solid #2563eb; padding: .4cm .6cm; margin: .5cm 0; border-radius: 0 6px 6px 0; }
+  .badge { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 9pt; font-weight: 600; }
+  .badge-blue { background: #dbeafe; color: #1d4ed8; }
+  .badge-green { background: #d1fae5; color: #059669; }
+  .badge-red { background: #fee2e2; color: #dc2626; }
+  .badge-yellow { background: #fef3c7; color: #b45309; }
+
+  /* SVG Diagram Styles */
+  .arch-diagram { width: 100%; margin: .4cm 0; }
+  .arch-diagram svg { width: 100%; height: auto; }
+  .arch-diagram text { font-family: 'Segoe UI', Arial, sans-serif; }
+
+  @media print {
+    body { padding: 0; }
+    .page-break { page-break-before: always; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ COVER PAGE ═══════════════════ -->
+<div class="cover">
+  <div class="university">University of Colombo School of Computing</div>
+  <div class="module">SCS2314 — Middleware Architecture</div>
+  <div class="cover-logo">⚡</div>
+  <div class="title">SwiftTrack:<br>Middleware Architecture for SwiftLogistics</div>
+  <div class="subtitle">Assignment 4 — Solution Documentation</div>
+  <div class="meta">
+    <strong>Group Members:</strong><br>
+    [Name 1] — [Index Number]<br>
+    [Name 2] — [Index Number]<br>
+    [Name 3] — [Index Number]<br>
+    [Name 4] — [Index Number]<br>
+    [Name 5] — [Index Number]<br>
+    <br>
+    <strong>Submission Date:</strong> February 2026<br>
+    <strong>Semester:</strong> January 2026
+  </div>
+</div>
+
+<!-- ═══════════════════ TABLE OF CONTENTS ═══════════════════ -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ul class="toc-list">
+    <li><span class="num">1.</span> Introduction &amp; Problem Statement</li>
+    <li><span class="num">2.</span> Architectural Challenges</li>
+    <li><span class="num">3.</span> Alternative Architectures Considered</li>
+    <li><span class="num">4.</span> Proposed Architecture</li>
+    <li><span class="num">4.1</span> Conceptual Architecture Diagram</li>
+    <li><span class="num">4.2</span> Component Architecture Diagram</li>
+    <li><span class="num">4.3</span> Deployment Architecture Diagram</li>
+    <li><span class="num">5.</span> Architectural &amp; Integration Patterns</li>
+    <li><span class="num">5.1</span> Saga Pattern (Distributed Transactions)</li>
+    <li><span class="num">5.2</span> Adapter Pattern (Protocol Translation)</li>
+    <li><span class="num">5.3</span> Publish-Subscribe Pattern</li>
+    <li><span class="num">6.</span> Technology Stack &amp; Justification</li>
+    <li><span class="num">7.</span> Implementation Details</li>
+    <li><span class="num">7.1</span> Service Inventory</li>
+    <li><span class="num">7.2</span> API Endpoints</li>
+    <li><span class="num">7.3</span> Data Flow: Order Lifecycle</li>
+    <li><span class="num">8.</span> Security Architecture</li>
+    <li><span class="num">9.</span> Testing &amp; Demonstration</li>
+    <li><span class="num">10.</span> Conclusion</li>
+    <li><span class="num">11.</span> References</li>
+  </ul>
+</div>
+
+<!-- ═══════════════════ 1. INTRODUCTION ═══════════════════ -->
+<h1>1. Introduction &amp; Problem Statement</h1>
+
+<p>SwiftLogistics is a last-mile delivery company operating at scale across Sri Lanka. The company relies on three independent, legacy systems that have been developed separately over time and use heterogeneous communication protocols:</p>
+
+<table>
+  <caption>Table 1: Existing Systems Overview</caption>
+  <thead><tr><th>System</th><th>Protocol</th><th>Data Format</th><th>Purpose</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Client Management System (CMS)</strong></td><td>SOAP over HTTP</td><td>XML</td><td>Order intake, customer records, billing</td></tr>
+    <tr><td><strong>Route Optimisation System (ROS)</strong></td><td>REST over HTTP</td><td>JSON</td><td>Cloud-based delivery route planning</td></tr>
+    <tr><td><strong>Warehouse Management System (WMS)</strong></td><td>Proprietary TCP/IP</td><td>Pipe-delimited</td><td>Inventory tracking, package operations</td></tr>
+  </tbody>
+</table>
+
+<p>These systems operate in isolation with no automated data flow between them. Order information must be manually transferred between departments, route planning cannot access real-time warehouse availability, and clients have no visibility into delivery progress. During peak periods such as Black Friday and Avurudu season, this manual coordination creates significant bottlenecks, delayed deliveries, and customer dissatisfaction.</p>
+
+<p>The goal of the <strong>SwiftTrack</strong> platform is to design and implement a middleware architecture that integrates these three heterogeneous systems into a unified, real-time logistics platform featuring a web-based Client Portal and a mobile-style Driver Application.</p>
+
+<!-- ═══════════════════ 2. CHALLENGES ═══════════════════ -->
+<h1>2. Architectural Challenges</h1>
+
+<p>Based on a thorough analysis of the business scenario, we identified six critical architectural challenges that our middleware must address:</p>
+
+<div class="highlight">
+  <strong>Challenge 1 — Heterogeneous System Integration:</strong> The three backend systems use entirely different communication paradigms (SOAP/XML, REST/JSON, TCP/pipe-delimited). The middleware must abstract these differences and present a unified API surface.
+</div>
+
+<div class="highlight">
+  <strong>Challenge 2 — Real-Time Tracking:</strong> Clients need live visibility into delivery status. Drivers need instant manifest updates. This requires a persistent, bidirectional communication channel (WebSocket) backed by an event-driven architecture.
+</div>
+
+<div class="highlight">
+  <strong>Challenge 3 — High-Volume Asynchronous Processing:</strong> During peak sales events, thousands of orders may be submitted simultaneously. The architecture must decouple order intake from processing to prevent system overload using message queues.
+</div>
+
+<div class="highlight">
+  <strong>Challenge 4 — Distributed Transaction Management:</strong> A single order placement spans three systems (CMS → WMS → ROS). If any step fails, all previously completed steps must be rolled back. This requires a saga pattern with compensating transactions.
+</div>
+
+<div class="highlight">
+  <strong>Challenge 5 — Scalability &amp; Resilience:</strong> Individual services must be independently deployable and scalable. Failure in one service must not cascade to others.
+</div>
+
+<div class="highlight">
+  <strong>Challenge 6 — Security:</strong> The platform must authenticate users, enforce role-based access control (client/driver/admin), validate all inputs, and prevent injection attacks — especially on the proprietary TCP protocol.
+</div>
+
+<!-- ═══════════════════ 3. ALTERNATIVES ═══════════════════ -->
+<h1 class="page-break">3. Alternative Architectures Considered</h1>
+
+<p>Before arriving at our final architecture, we evaluated three distinct approaches:</p>
+
+<h2>Option A: Monolithic Enterprise Service Bus (ESB)</h2>
+<p>A traditional ESB approach would use a single, centralized middleware bus (e.g., Apache ServiceMix or WSO2 ESB) to mediate all communication. While this offers centralized configuration and transformation, it introduces a <strong>single point of failure</strong>, is difficult to scale horizontally, and creates tight coupling between the bus and all services. Given the requirement for high-volume async processing and real-time events, this architecture would struggle at scale.</p>
+<p><span class="badge badge-red">❌ Rejected</span> — Single point of failure, poor scalability for high-volume events.</p>
+
+<h2>Option B: Pure Microservices with Choreography</h2>
+<p>In a choreography-based approach, each service reacts to events independently — there is no central coordinator. Services publish and subscribe to events via a message broker. While this is highly decoupled, the distributed transaction spanning CMS → WMS → ROS becomes very difficult to manage, debug, and reason about. Compensating transactions would require complex event chains with no single point of visibility.</p>
+<p><span class="badge badge-yellow">⚠️ Rejected</span> — Saga rollbacks across three systems are error-prone without a central orchestrator.</p>
+
+<h2>Option C: API Gateway + Orchestrated Microservices + Event-Driven (Selected)</h2>
+<p>Our chosen architecture combines the best aspects of centralized orchestration and event-driven decoupling:</p>
+<ul>
+  <li>An <strong>API Gateway</strong> provides a single entry point for all client requests, handling authentication, routing, and WebSocket management.</li>
+  <li>A dedicated <strong>Orchestrator</strong> service implements the saga pattern, managing the multi-step order transaction with explicit compensation logic.</li>
+  <li><strong>Adapter services</strong> translate between the gateway's REST/JSON interface and each backend's native protocol.</li>
+  <li><strong>RabbitMQ</strong> handles asynchronous order queuing for high-volume scenarios.</li>
+  <li><strong>Redis</strong> provides fast state storage and Pub/Sub for real-time WebSocket event distribution.</li>
+</ul>
+<p><span class="badge badge-green">✅ Selected</span> — Best balance of centralized control, async capability, and real-time events.</p>
+
+
+<!-- ═══════════════════ 4. PROPOSED ARCHITECTURE ═══════════════════ -->
+<h1 class="page-break">4. Proposed Architecture</h1>
+
+<h2>4.1 Conceptual Architecture Diagram</h2>
+<p>The following diagram presents the high-level conceptual view of the SwiftTrack middleware platform, showing the layered architecture and communication flows between components.</p>
+
+<div class="fig">
+  <svg viewBox="0 0 900 680" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:820px;font-family:'Segoe UI',Arial,sans-serif;">
+    <!-- Background layers -->
+    <rect x="20" y="10" width="860" height="110" rx="12" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+    <text x="40" y="35" font-size="11" fill="#1d4ed8" font-weight="700">PRESENTATION LAYER</text>
+
+    <rect x="20" y="135" width="860" height="100" rx="12" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+    <text x="40" y="158" font-size="11" fill="#059669" font-weight="700">API GATEWAY LAYER</text>
+
+    <rect x="20" y="250" width="860" height="100" rx="12" fill="#fefce8" stroke="#fde047" stroke-width="1.5"/>
+    <text x="40" y="273" font-size="11" fill="#b45309" font-weight="700">ORCHESTRATION LAYER</text>
+
+    <rect x="20" y="365" width="860" height="100" rx="12" fill="#fdf2f8" stroke="#f9a8d4" stroke-width="1.5"/>
+    <text x="40" y="388" font-size="11" fill="#be185d" font-weight="700">ADAPTER / INTEGRATION LAYER</text>
+
+    <rect x="20" y="480" width="860" height="100" rx="12" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1.5"/>
+    <text x="40" y="503" font-size="11" fill="#7c3aed" font-weight="700">BACKEND SYSTEMS LAYER</text>
+
+    <rect x="20" y="595" width="860" height="75" rx="12" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5"/>
+    <text x="40" y="618" font-size="11" fill="#c2410c" font-weight="700">INFRASTRUCTURE LAYER</text>
+
+    <!-- Presentation: Client Portal & Driver App -->
+    <rect x="200" y="45" rx="8" width="200" height="55" fill="#2563eb" stroke="#1d4ed8" stroke-width="1.5"/>
+    <text x="300" y="70" text-anchor="middle" fill="#fff" font-size="12" font-weight="600">🖥️ Client Portal</text>
+    <text x="300" y="88" text-anchor="middle" fill="#bfdbfe" font-size="9">HTML/JS SPA — REST + WebSocket</text>
+
+    <rect x="500" y="45" rx="8" width="200" height="55" fill="#2563eb" stroke="#1d4ed8" stroke-width="1.5"/>
+    <text x="600" y="70" text-anchor="middle" fill="#fff" font-size="12" font-weight="600">📱 Driver App</text>
+    <text x="600" y="88" text-anchor="middle" fill="#bfdbfe" font-size="9">Mobile-style SPA — REST + WebSocket</text>
+
+    <!-- Gateway -->
+    <rect x="280" y="165" rx="8" width="340" height="55" fill="#16a34a" stroke="#15803d" stroke-width="1.5"/>
+    <text x="450" y="190" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">🔒 API Gateway (FastAPI)</text>
+    <text x="450" y="208" text-anchor="middle" fill="#bbf7d0" font-size="9">JWT Auth · RBAC · REST Proxy · WebSocket Hub</text>
+
+    <!-- Orchestrator -->
+    <rect x="280" y="275" rx="8" width="340" height="55" fill="#d97706" stroke="#b45309" stroke-width="1.5"/>
+    <text x="450" y="300" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">🔄 Orchestrator (Saga Engine)</text>
+    <text x="450" y="318" text-anchor="middle" fill="#fef3c7" font-size="9">CMS → WMS → ROS · Compensating Transactions</text>
+
+    <!-- Adapters -->
+    <rect x="80" y="393" rx="8" width="210" height="50" fill="#db2777" stroke="#be185d" stroke-width="1.5"/>
+    <text x="185" y="415" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">CMS Adapter</text>
+    <text x="185" y="432" text-anchor="middle" fill="#fce7f3" font-size="9">SOAP/XML ↔ REST/JSON (Zeep)</text>
+
+    <rect x="345" y="393" rx="8" width="210" height="50" fill="#db2777" stroke="#be185d" stroke-width="1.5"/>
+    <text x="450" y="415" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">WMS Adapter</text>
+    <text x="450" y="432" text-anchor="middle" fill="#fce7f3" font-size="9">TCP/Pipe ↔ REST/JSON (asyncio)</text>
+
+    <rect x="610" y="393" rx="8" width="210" height="50" fill="#7c3aed" stroke="#6d28d9" stroke-width="1.2" stroke-dasharray="6,3"/>
+    <text x="715" y="415" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">ROS (Direct REST)</text>
+    <text x="715" y="432" text-anchor="middle" fill="#ede9fe" font-size="9">No adapter needed — native JSON</text>
+
+    <!-- Backend Systems -->
+    <rect x="80" y="510" rx="8" width="210" height="50" fill="#7c3aed" stroke="#6d28d9" stroke-width="1.5"/>
+    <text x="185" y="532" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">📋 Mock CMS (Spyne SOAP)</text>
+    <text x="185" y="548" text-anchor="middle" fill="#ede9fe" font-size="9">Port 8005 · WSDL/XML</text>
+
+    <rect x="345" y="510" rx="8" width="210" height="50" fill="#7c3aed" stroke="#6d28d9" stroke-width="1.5"/>
+    <text x="450" y="532" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">📦 Mock WMS (TCP Server)</text>
+    <text x="450" y="548" text-anchor="middle" fill="#ede9fe" font-size="9">Port 9000 · Pipe-delimited</text>
+
+    <rect x="610" y="510" rx="8" width="210" height="50" fill="#7c3aed" stroke="#6d28d9" stroke-width="1.5"/>
+    <text x="715" y="532" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">🗺️ Mock ROS (FastAPI)</text>
+    <text x="715" y="548" text-anchor="middle" fill="#ede9fe" font-size="9">Port 8003 · REST/JSON</text>
+
+    <!-- Infrastructure -->
+    <rect x="130" y="622" rx="8" width="260" height="36" fill="#ea580c" stroke="#c2410c" stroke-width="1.5"/>
+    <text x="260" y="645" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">🐰 RabbitMQ (Message Broker)</text>
+
+    <rect x="510" y="622" rx="8" width="260" height="36" fill="#ea580c" stroke="#c2410c" stroke-width="1.5"/>
+    <text x="640" y="645" text-anchor="middle" fill="#fff" font-size="11" font-weight="600">⚡ Redis (State + Pub/Sub)</text>
+
+    <!-- Arrows: Presentation → Gateway -->
+    <line x1="300" y1="100" x2="400" y2="165" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line x1="600" y1="100" x2="500" y2="165" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <!-- Arrows: Gateway → Orchestrator -->
+    <line x1="450" y1="220" x2="450" y2="275" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+    <!-- Arrows: Orchestrator → Adapters -->
+    <line x1="370" y1="330" x2="185" y2="393" stroke="#64748b" stroke-width="1.3" marker-end="url(#arrow)"/>
+    <line x1="450" y1="330" x2="450" y2="393" stroke="#64748b" stroke-width="1.3" marker-end="url(#arrow)"/>
+    <line x1="530" y1="330" x2="715" y2="393" stroke="#64748b" stroke-width="1.3" marker-end="url(#arrow)"/>
+
+    <!-- Arrows: Adapters → Backends -->
+    <line x1="185" y1="443" x2="185" y2="510" stroke="#64748b" stroke-width="1.3" marker-end="url(#arrow)"/>
+    <line x1="450" y1="443" x2="450" y2="510" stroke="#64748b" stroke-width="1.3" marker-end="url(#arrow)"/>
+    <line x1="715" y1="443" x2="715" y2="510" stroke="#64748b" stroke-width="1.3" marker-end="url(#arrow)"/>
+
+    <!-- Arrows: Orchestrator → Infrastructure -->
+    <line x1="380" y1="330" x2="260" y2="622" stroke="#f97316" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#arrow-orange)"/>
+    <line x1="520" y1="330" x2="640" y2="622" stroke="#f97316" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#arrow-orange)"/>
+
+    <!-- Gateway ↔ Redis (WebSocket Pub/Sub) -->
+    <line x1="500" y1="220" x2="640" y2="622" stroke="#f97316" stroke-width="1.2" stroke-dasharray="5,3" marker-end="url(#arrow-orange)"/>
+
+    <!-- Protocol labels -->
+    <text x="130" y="478" font-size="9" fill="#be185d" font-weight="600">SOAP/XML</text>
+    <text x="420" y="478" font-size="9" fill="#be185d" font-weight="600">TCP/Pipe</text>
+    <text x="690" y="478" font-size="9" fill="#7c3aed" font-weight="600">REST/JSON</text>
+
+    <!-- Arrow markers -->
+    <defs>
+      <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#64748b"/>
+      </marker>
+      <marker id="arrow-orange" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#f97316"/>
+      </marker>
+    </defs>
+  </svg>
+  <div class="fig-caption">Figure 1: Conceptual Architecture — SwiftTrack Middleware Platform</div>
+</div>
+
+
+<h2 class="page-break">4.2 Component Architecture Diagram</h2>
+<p>This diagram details the internal components of each service and the communication protocols used between them.</p>
+
+<div class="fig">
+  <svg viewBox="0 0 920 560" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:840px;font-family:'Segoe UI',Arial,sans-serif;">
+    <!-- API Gateway box -->
+    <rect x="280" y="10" width="360" height="120" rx="10" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+    <text x="460" y="32" text-anchor="middle" font-size="12" fill="#15803d" font-weight="700">API Gateway (:8000)</text>
+    <rect x="295" y="42" width="100" height="30" rx="5" fill="#16a34a"/><text x="345" y="62" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">JWT Auth</text>
+    <rect x="405" y="42" width="100" height="30" rx="5" fill="#16a34a"/><text x="455" y="62" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">REST Proxy</text>
+    <rect x="515" y="42" width="110" height="30" rx="5" fill="#16a34a"/><text x="570" y="62" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">WebSocket Hub</text>
+    <rect x="295" y="82" width="100" height="30" rx="5" fill="#059669"/><text x="345" y="102" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">RBAC Guard</text>
+    <rect x="405" y="82" width="100" height="30" rx="5" fill="#059669"/><text x="455" y="102" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">Static Files</text>
+    <rect x="515" y="82" width="110" height="30" rx="5" fill="#059669"/><text x="570" y="102" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">Redis Subscriber</text>
+
+    <!-- Orchestrator box -->
+    <rect x="280" y="160" width="360" height="100" rx="10" fill="#fefce8" stroke="#d97706" stroke-width="2"/>
+    <text x="460" y="182" text-anchor="middle" font-size="12" fill="#b45309" font-weight="700">Orchestrator (:8001)</text>
+    <rect x="295" y="192" width="105" height="28" rx="5" fill="#d97706"/><text x="347" y="211" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">Saga Engine</text>
+    <rect x="410" y="192" width="105" height="28" rx="5" fill="#d97706"/><text x="462" y="211" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">Compensator</text>
+    <rect x="525" y="192" width="105" height="28" rx="5" fill="#d97706"/><text x="577" y="211" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">MQ Consumer</text>
+    <rect x="340" y="228" width="240" height="22" rx="5" fill="#b45309"/><text x="460" y="244" text-anchor="middle" font-size="8.5" fill="#fff">Redis State · RabbitMQ Pub · Tracking Events</text>
+
+    <!-- CMS Adapter -->
+    <rect x="30" y="300" width="210" height="70" rx="8" fill="#fdf2f8" stroke="#db2777" stroke-width="1.5"/>
+    <text x="135" y="322" text-anchor="middle" font-size="11" fill="#be185d" font-weight="700">CMS Adapter (:8002)</text>
+    <text x="135" y="340" text-anchor="middle" font-size="9" fill="#9d174d">Zeep SOAP Client</text>
+    <text x="135" y="355" text-anchor="middle" font-size="9" fill="#9d174d">XML ↔ JSON Transform</text>
+
+    <!-- WMS Adapter -->
+    <rect x="355" y="300" width="210" height="70" rx="8" fill="#fdf2f8" stroke="#db2777" stroke-width="1.5"/>
+    <text x="460" y="322" text-anchor="middle" font-size="11" fill="#be185d" font-weight="700">WMS Adapter (:8004)</text>
+    <text x="460" y="340" text-anchor="middle" font-size="9" fill="#9d174d">asyncio TCP Client</text>
+    <text x="460" y="355" text-anchor="middle" font-size="9" fill="#9d174d">Pipe ↔ JSON Transform</text>
+
+    <!-- ROS Direct -->
+    <rect x="680" y="300" width="210" height="70" rx="8" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="6,3"/>
+    <text x="785" y="322" text-anchor="middle" font-size="11" fill="#6d28d9" font-weight="700">ROS (Direct) (:8003)</text>
+    <text x="785" y="340" text-anchor="middle" font-size="9" fill="#6d28d9">Native REST/JSON</text>
+    <text x="785" y="355" text-anchor="middle" font-size="9" fill="#6d28d9">No adapter required</text>
+
+    <!-- Backend systems -->
+    <rect x="30" y="420" width="210" height="50" rx="8" fill="#7c3aed"/>
+    <text x="135" y="442" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">Mock CMS (:8005)</text>
+    <text x="135" y="458" text-anchor="middle" font-size="9" fill="#ede9fe">Spyne SOAP · WSDL/XML</text>
+
+    <rect x="355" y="420" width="210" height="50" rx="8" fill="#7c3aed"/>
+    <text x="460" y="442" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">Mock WMS (:9000)</text>
+    <text x="460" y="458" text-anchor="middle" font-size="9" fill="#ede9fe">asyncio TCP · Pipe-delimited</text>
+
+    <rect x="680" y="420" width="210" height="50" rx="8" fill="#7c3aed"/>
+    <text x="785" y="442" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">Mock ROS (:8003)</text>
+    <text x="785" y="458" text-anchor="middle" font-size="9" fill="#ede9fe">FastAPI · REST/JSON</text>
+
+    <!-- Infrastructure -->
+    <rect x="100" y="510" width="300" height="38" rx="8" fill="#ea580c"/>
+    <text x="250" y="535" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">🐰 RabbitMQ (:5672 / :15672)</text>
+    <rect x="520" y="510" width="300" height="38" rx="8" fill="#ea580c"/>
+    <text x="670" y="535" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">⚡ Redis (:6379)</text>
+
+    <!-- Connections Gateway → Orchestrator -->
+    <line x1="460" y1="130" x2="460" y2="160" stroke="#64748b" stroke-width="1.5" marker-end="url(#a2)"/>
+    <text x="475" y="150" font-size="8" fill="#64748b">REST/JSON</text>
+
+    <!-- Orchestrator → Adapters -->
+    <line x1="370" y1="260" x2="135" y2="300" stroke="#64748b" stroke-width="1.3" marker-end="url(#a2)"/>
+    <line x1="460" y1="260" x2="460" y2="300" stroke="#64748b" stroke-width="1.3" marker-end="url(#a2)"/>
+    <line x1="550" y1="260" x2="785" y2="300" stroke="#64748b" stroke-width="1.3" marker-end="url(#a2)"/>
+
+    <!-- Adapters → Backends -->
+    <line x1="135" y1="370" x2="135" y2="420" stroke="#db2777" stroke-width="1.3" marker-end="url(#a3)"/>
+    <text x="150" y="400" font-size="8" fill="#db2777" font-weight="600">SOAP</text>
+    <line x1="460" y1="370" x2="460" y2="420" stroke="#db2777" stroke-width="1.3" marker-end="url(#a3)"/>
+    <text x="475" y="400" font-size="8" fill="#db2777" font-weight="600">TCP</text>
+    <line x1="785" y1="370" x2="785" y2="420" stroke="#7c3aed" stroke-width="1.3" marker-end="url(#a4)"/>
+    <text x="800" y="400" font-size="8" fill="#7c3aed" font-weight="600">REST</text>
+
+    <!-- Orch → RabbitMQ, Redis -->
+    <line x1="380" y1="260" x2="250" y2="510" stroke="#f97316" stroke-width="1.1" stroke-dasharray="5,3" marker-end="url(#a5)"/>
+    <line x1="540" y1="260" x2="670" y2="510" stroke="#f97316" stroke-width="1.1" stroke-dasharray="5,3" marker-end="url(#a5)"/>
+
+    <defs>
+      <marker id="a2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#64748b"/></marker>
+      <marker id="a3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#db2777"/></marker>
+      <marker id="a4" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#7c3aed"/></marker>
+      <marker id="a5" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#f97316"/></marker>
+    </defs>
+  </svg>
+  <div class="fig-caption">Figure 2: Component Architecture — Internal Components and Communication Protocols</div>
+</div>
+
+
+<h2 class="page-break">4.3 Deployment Architecture Diagram</h2>
+<p>All nine services are containerized using Docker and orchestrated via Docker Compose on a private bridge network (<code>swiftnet</code>). Only the API Gateway is exposed to the host network on port 8000.</p>
+
+<div class="fig">
+  <svg viewBox="0 0 900 480" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:820px;font-family:'Segoe UI',Arial,sans-serif;">
+    <!-- Docker Host -->
+    <rect x="15" y="10" width="870" height="460" rx="14" fill="#f8fafc" stroke="#0ea5e9" stroke-width="2.5" stroke-dasharray="8,4"/>
+    <text x="35" y="36" font-size="13" fill="#0369a1" font-weight="700">🐳 Docker Compose Host — Network: swiftnet (bridge)</text>
+
+    <!-- Exposed port label -->
+    <rect x="690" y="55" width="170" height="28" rx="6" fill="#dc2626"/>
+    <text x="775" y="74" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">🌐 Exposed: port 8000</text>
+
+    <!-- Gateway -->
+    <rect x="40" y="55" width="240" height="65" rx="8" fill="#16a34a" stroke="#15803d" stroke-width="1.5"/>
+    <text x="160" y="78" text-anchor="middle" font-size="12" fill="#fff" font-weight="700">swifttrack-gateway</text>
+    <text x="160" y="95" text-anchor="middle" font-size="9" fill="#bbf7d0">FastAPI + Uvicorn :8000</text>
+    <text x="160" y="110" text-anchor="middle" font-size="8" fill="#bbf7d0">depends_on: redis ✓, rabbitmq ✓</text>
+
+    <!-- Orchestrator -->
+    <rect x="330" y="55" width="240" height="65" rx="8" fill="#d97706" stroke="#b45309" stroke-width="1.5"/>
+    <text x="450" y="78" text-anchor="middle" font-size="12" fill="#fff" font-weight="700">swifttrack-orchestrator</text>
+    <text x="450" y="95" text-anchor="middle" font-size="9" fill="#fef3c7">FastAPI :8001</text>
+    <text x="450" y="110" text-anchor="middle" font-size="8" fill="#fef3c7">depends_on: redis ✓, rabbitmq ✓</text>
+
+    <!-- CMS Adapter -->
+    <rect x="40" y="150" width="180" height="55" rx="8" fill="#db2777" stroke="#be185d" stroke-width="1.5"/>
+    <text x="130" y="173" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">cms-adapter</text>
+    <text x="130" y="192" text-anchor="middle" font-size="9" fill="#fce7f3">FastAPI + Zeep :8002</text>
+
+    <!-- WMS Adapter -->
+    <rect x="250" y="150" width="180" height="55" rx="8" fill="#db2777" stroke="#be185d" stroke-width="1.5"/>
+    <text x="340" y="173" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">wms-adapter</text>
+    <text x="340" y="192" text-anchor="middle" font-size="9" fill="#fce7f3">FastAPI + asyncio :8004</text>
+
+    <!-- Mock CMS -->
+    <rect x="40" y="240" width="180" height="50" rx="8" fill="#7c3aed"/>
+    <text x="130" y="262" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">mock-cms</text>
+    <text x="130" y="279" text-anchor="middle" font-size="9" fill="#ede9fe">Spyne SOAP :8005</text>
+
+    <!-- Mock WMS -->
+    <rect x="250" y="240" width="180" height="50" rx="8" fill="#7c3aed"/>
+    <text x="340" y="262" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">mock-wms</text>
+    <text x="340" y="279" text-anchor="middle" font-size="9" fill="#ede9fe">TCP Server :9000</text>
+
+    <!-- Mock ROS -->
+    <rect x="460" y="240" width="180" height="50" rx="8" fill="#7c3aed"/>
+    <text x="550" y="262" text-anchor="middle" font-size="11" fill="#fff" font-weight="600">mock-ros</text>
+    <text x="550" y="279" text-anchor="middle" font-size="9" fill="#ede9fe">FastAPI REST :8003</text>
+
+    <!-- Redis -->
+    <rect x="40" y="330" width="280" height="55" rx="8" fill="#ea580c" stroke="#c2410c" stroke-width="1.5"/>
+    <text x="180" y="355" text-anchor="middle" font-size="12" fill="#fff" font-weight="700">⚡ swifttrack-redis</text>
+    <text x="180" y="373" text-anchor="middle" font-size="9" fill="#fff">Redis 7-alpine :6379 · healthcheck: redis-cli ping</text>
+
+    <!-- RabbitMQ -->
+    <rect x="350" y="330" width="320" height="55" rx="8" fill="#ea580c" stroke="#c2410c" stroke-width="1.5"/>
+    <text x="510" y="355" text-anchor="middle" font-size="12" fill="#fff" font-weight="700">🐰 swifttrack-rabbitmq</text>
+    <text x="510" y="373" text-anchor="middle" font-size="9" fill="#fff">RabbitMQ 3-management :5672/:15672 · healthcheck</text>
+
+    <!-- Container count -->
+    <rect x="700" y="330" width="160" height="55" rx="8" fill="#1e293b"/>
+    <text x="780" y="350" text-anchor="middle" font-size="10" fill="#94a3b8" font-weight="600">TOTAL</text>
+    <text x="780" y="374" text-anchor="middle" font-size="22" fill="#fff" font-weight="700">9 containers</text>
+
+    <!-- Service discovery note -->
+    <rect x="40" y="415" width="830" height="40" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+    <text x="455" y="440" text-anchor="middle" font-size="10" fill="#1d4ed8">🔍 Service Discovery: Docker DNS on swiftnet network — services reference each other by container name (e.g., http://orchestrator:8001)</text>
+  </svg>
+  <div class="fig-caption">Figure 3: Deployment Architecture — Docker Compose on swiftnet Bridge Network</div>
+</div>
+
+
+<!-- ═══════════════════ 5. PATTERNS ═══════════════════ -->
+<h1 class="page-break">5. Architectural &amp; Integration Patterns</h1>
+
+<h2>5.1 Saga Pattern — Distributed Transaction Management</h2>
+<p>The order placement process spans three independent systems. Since distributed ACID transactions are not feasible across SOAP, TCP, and REST services, we implement the <strong>Saga Pattern (Orchestration variant)</strong> to maintain eventual consistency with compensating transactions.</p>
+
+<div class="fig">
+  <svg viewBox="0 0 880 260" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:800px;font-family:'Segoe UI',Arial,sans-serif;">
+    <!-- Steps -->
+    <rect x="10" y="30" width="130" height="50" rx="8" fill="#64748b"/><text x="75" y="52" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">STARTED</text><text x="75" y="68" text-anchor="middle" font-size="8" fill="#cbd5e1">Saga created</text>
+    <rect x="180" y="30" width="150" height="50" rx="8" fill="#2563eb"/><text x="255" y="52" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">1. CMS: Create Order</text><text x="255" y="68" text-anchor="middle" font-size="8" fill="#bfdbfe">SOAP/XML via Adapter</text>
+    <rect x="370" y="30" width="150" height="50" rx="8" fill="#d97706"/><text x="445" y="52" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">2. WMS: Recv Package</text><text x="445" y="68" text-anchor="middle" font-size="8" fill="#fef3c7">TCP/Pipe via Adapter</text>
+    <rect x="560" y="30" width="150" height="50" rx="8" fill="#7c3aed"/><text x="635" y="52" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">3. ROS: Opt. Route</text><text x="635" y="68" text-anchor="middle" font-size="8" fill="#ede9fe">REST/JSON direct</text>
+    <rect x="750" y="30" width="120" height="50" rx="8" fill="#16a34a"/><text x="810" y="52" text-anchor="middle" font-size="10" fill="#fff" font-weight="600">COMPLETED</text><text x="810" y="68" text-anchor="middle" font-size="8" fill="#bbf7d0">Order active</text>
+
+    <!-- Forward arrows -->
+    <line x1="140" y1="55" x2="180" y2="55" stroke="#334155" stroke-width="2" marker-end="url(#sa)"/>
+    <line x1="330" y1="55" x2="370" y2="55" stroke="#334155" stroke-width="2" marker-end="url(#sa)"/>
+    <line x1="520" y1="55" x2="560" y2="55" stroke="#334155" stroke-width="2" marker-end="url(#sa)"/>
+    <line x1="710" y1="55" x2="750" y2="55" stroke="#334155" stroke-width="2" marker-end="url(#sa)"/>
+
+    <!-- Compensation arrows (downward) -->
+    <text x="255" y="110" text-anchor="middle" font-size="9" fill="#dc2626" font-weight="600">❌ Fail → Compensate</text>
+    <rect x="180" y="120" width="150" height="40" rx="6" fill="#fee2e2" stroke="#dc2626" stroke-width="1"/>
+    <text x="255" y="145" text-anchor="middle" font-size="9" fill="#dc2626">Cancel CMS order</text>
+
+    <text x="445" y="110" text-anchor="middle" font-size="9" fill="#dc2626" font-weight="600">❌ Fail → Compensate</text>
+    <rect x="370" y="120" width="150" height="40" rx="6" fill="#fee2e2" stroke="#dc2626" stroke-width="1"/>
+    <text x="445" y="145" text-anchor="middle" font-size="9" fill="#dc2626">Cancel WMS pkg + CMS</text>
+
+    <text x="635" y="110" text-anchor="middle" font-size="9" fill="#dc2626" font-weight="600">❌ Fail → Compensate</text>
+    <rect x="560" y="120" width="150" height="40" rx="6" fill="#fee2e2" stroke="#dc2626" stroke-width="1"/>
+    <text x="635" y="145" text-anchor="middle" font-size="9" fill="#dc2626">Cancel all 3 steps</text>
+
+    <!-- Compensation chain -->
+    <line x1="255" y1="80" x2="255" y2="120" stroke="#dc2626" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#sa-r)"/>
+    <line x1="445" y1="80" x2="445" y2="120" stroke="#dc2626" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#sa-r)"/>
+    <line x1="635" y1="80" x2="635" y2="120" stroke="#dc2626" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#sa-r)"/>
+
+    <!-- State machine labels -->
+    <text x="440" y="200" text-anchor="middle" font-size="10" fill="#475569" font-weight="600">Saga State Machine: STARTED → CMS_CREATED → WMS_RECEIVED → ROS_OPTIMISED → COMPLETED</text>
+    <text x="440" y="218" text-anchor="middle" font-size="9" fill="#64748b">On failure at any step: COMPENSATING → FAILED (with all previous steps rolled back)</text>
+    <text x="440" y="242" text-anchor="middle" font-size="9" fill="#64748b">Real-time tracking events published at each state transition via Redis Pub/Sub → WebSocket</text>
+
+    <defs>
+      <marker id="sa" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#334155"/></marker>
+      <marker id="sa-r" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#dc2626"/></marker>
+    </defs>
+  </svg>
+  <div class="fig-caption">Figure 4: Saga Pattern — Order Placement with Compensating Transactions</div>
+</div>
+
+<h2>5.2 Adapter Pattern — Protocol Translation</h2>
+<p>The Adapter Pattern is used to decouple the middleware's internal REST/JSON interface from the heterogeneous protocols of the legacy backend systems:</p>
+
+<table>
+  <caption>Table 2: Protocol Adapters</caption>
+  <thead><tr><th>Adapter</th><th>Internal Interface</th><th>External Protocol</th><th>Translation Logic</th></tr></thead>
+  <tbody>
+    <tr><td><strong>CMS Adapter</strong></td><td>REST/JSON (FastAPI)</td><td>SOAP/XML (Spyne)</td><td>Zeep SOAP client marshals JSON→XML request, parses XML→JSON response</td></tr>
+    <tr><td><strong>WMS Adapter</strong></td><td>REST/JSON (FastAPI)</td><td>Proprietary TCP/IP</td><td>asyncio TCP client builds pipe-delimited commands, parses pipe-delimited responses</td></tr>
+    <tr><td><strong>ROS</strong> (no adapter)</td><td colspan="3">Direct REST/JSON — no translation required</td></tr>
+  </tbody>
+</table>
+
+<h2>5.3 Publish-Subscribe Pattern</h2>
+<p>Two Pub/Sub mechanisms are employed:</p>
+<ul>
+  <li><strong>RabbitMQ Topic Exchange</strong> (<code>swifttrack.events</code>): Used for durable, persistent event distribution between microservices. The <code>order.submissions</code> queue enables asynchronous order processing — orders are published by the gateway and consumed by the orchestrator in the background.</li>
+  <li><strong>Redis Pub/Sub</strong> (<code>swifttrack:tracking</code> channel): Used for lightweight, real-time event broadcasting. The orchestrator publishes status updates, and the gateway's Redis subscriber pushes these to connected WebSocket clients with intelligent routing based on user role (client, driver, admin).</li>
+</ul>
+
+
+<!-- ═══════════════════ 6. TECH STACK ═══════════════════ -->
+<h1 class="page-break">6. Technology Stack &amp; Justification</h1>
+
+<p>All technologies used are <strong>open-source</strong>, as required by the assignment. The following table details each technology choice with its justification:</p>
+
+<table>
+  <caption>Table 3: Technology Stack</caption>
+  <thead><tr><th>Component</th><th>Technology</th><th>Version</th><th>Justification</th></tr></thead>
+  <tbody>
+    <tr><td>Language</td><td>Python</td><td>3.11</td><td>Rich async ecosystem, excellent library support for SOAP/TCP/REST</td></tr>
+    <tr><td>API Framework</td><td>FastAPI</td><td>≥0.109</td><td>Native async, automatic OpenAPI docs, Pydantic validation, WebSocket support</td></tr>
+    <tr><td>ASGI Server</td><td>Uvicorn</td><td>≥0.27</td><td>High-performance async server with native WebSocket support</td></tr>
+    <tr><td>SOAP Server</td><td>Spyne</td><td>≥2.14</td><td>Standard Python SOAP framework with WSDL generation</td></tr>
+    <tr><td>SOAP Client</td><td>Zeep</td><td>≥4.2</td><td>Industry-standard Python SOAP consumer with WSDL parsing</td></tr>
+    <tr><td>TCP/IP</td><td>Python asyncio</td><td>built-in</td><td>Native async socket support for persistent TCP connections</td></tr>
+    <tr><td>HTTP Client</td><td>httpx</td><td>≥0.27</td><td>Async HTTP client with connection pooling, timeouts</td></tr>
+    <tr><td>Message Broker</td><td>RabbitMQ</td><td>3.x</td><td>Reliable, persistent message queuing with topic exchanges</td></tr>
+    <tr><td>MQ Client</td><td>aio-pika</td><td>≥9.4</td><td>Async Python AMQP client for RabbitMQ</td></tr>
+    <tr><td>In-Memory Store</td><td>Redis</td><td>7.x</td><td>Fast state storage (saga state, order cache) + Pub/Sub for real-time events</td></tr>
+    <tr><td>Redis Client</td><td>redis-py (async)</td><td>≥5.0</td><td>Async Redis client with Pub/Sub support</td></tr>
+    <tr><td>Authentication</td><td>PyJWT</td><td>≥2.8</td><td>Stateless JWT tokens (HS256, 60-min expiry)</td></tr>
+    <tr><td>Validation</td><td>Pydantic</td><td>≥2.0</td><td>Data validation and serialization for all API models</td></tr>
+    <tr><td>Containerization</td><td>Docker + Compose</td><td>v2</td><td>Service isolation, reproducible builds, DNS service discovery</td></tr>
+    <tr><td>UI Framework</td><td>Vanilla HTML/CSS/JS</td><td>—</td><td>Lightweight SPA with native WebSocket API, no build step</td></tr>
+  </tbody>
+</table>
+
+
+<!-- ═══════════════════ 7. IMPLEMENTATION ═══════════════════ -->
+<h1 class="page-break">7. Implementation Details</h1>
+
+<h2>7.1 Service Inventory</h2>
+<table>
+  <caption>Table 4: Microservice Inventory</caption>
+  <thead><tr><th>Service</th><th>Container Name</th><th>Port</th><th>Responsibility</th><th>Dependencies</th></tr></thead>
+  <tbody>
+    <tr><td>API Gateway</td><td>swifttrack-gateway</td><td>8000</td><td>Auth, routing, WebSocket hub, static UI</td><td>Redis, RabbitMQ</td></tr>
+    <tr><td>Orchestrator</td><td>swifttrack-orchestrator</td><td>8001</td><td>Saga execution, async consumer</td><td>Redis, RabbitMQ</td></tr>
+    <tr><td>CMS Adapter</td><td>swifttrack-cms-adapter</td><td>8002</td><td>SOAP↔REST protocol translation</td><td>Mock CMS</td></tr>
+    <tr><td>Mock ROS</td><td>swifttrack-mock-ros</td><td>8003</td><td>Simulated cloud route optimizer</td><td>None</td></tr>
+    <tr><td>WMS Adapter</td><td>swifttrack-wms-adapter</td><td>8004</td><td>TCP↔REST protocol translation</td><td>Mock WMS, RabbitMQ, Redis</td></tr>
+    <tr><td>Mock CMS</td><td>swifttrack-mock-cms</td><td>8005</td><td>Simulated legacy SOAP service</td><td>None</td></tr>
+    <tr><td>Mock WMS</td><td>swifttrack-mock-wms</td><td>9000</td><td>Simulated proprietary TCP service</td><td>None</td></tr>
+    <tr><td>Redis</td><td>swifttrack-redis</td><td>6379</td><td>State store + Pub/Sub</td><td>None</td></tr>
+    <tr><td>RabbitMQ</td><td>swifttrack-rabbitmq</td><td>5672/15672</td><td>Message broker + management UI</td><td>None</td></tr>
+  </tbody>
+</table>
+
+<h2>7.2 Key API Endpoints</h2>
+<table>
+  <caption>Table 5: API Endpoints (Gateway)</caption>
+  <thead><tr><th>Method</th><th>Endpoint</th><th>Auth</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>POST</code></td><td>/api/v1/auth/login</td><td>Public</td><td>Authenticate user, return JWT token</td></tr>
+    <tr><td><code>POST</code></td><td>/api/v1/orders</td><td>Client</td><td>Submit order (synchronous saga)</td></tr>
+    <tr><td><code>POST</code></td><td>/api/v1/orders/async</td><td>Client</td><td>Submit order to RabbitMQ queue (async)</td></tr>
+    <tr><td><code>GET</code></td><td>/api/v1/orders/client/{id}</td><td>Client</td><td>List client's orders from Redis</td></tr>
+    <tr><td><code>GET</code></td><td>/api/v1/orders/{id}</td><td>Any</td><td>Get single order status</td></tr>
+    <tr><td><code>GET</code></td><td>/api/v1/driver/manifest</td><td>Driver</td><td>Get driver's delivery manifest</td></tr>
+    <tr><td><code>POST</code></td><td>/api/v1/delivery/update</td><td>Driver</td><td>Mark delivery as delivered/failed</td></tr>
+    <tr><td><code>WS</code></td><td>/ws/tracking?token=</td><td>JWT</td><td>Real-time WebSocket event stream</td></tr>
+  </tbody>
+</table>
+
+<h2>7.3 Data Flow: Order Lifecycle</h2>
+<p>The following describes the complete lifecycle of a delivery order through the SwiftTrack platform:</p>
+
+<div class="fig">
+  <svg viewBox="0 0 880 380" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:800px;font-family:'Segoe UI',Arial,sans-serif;">
+    <!-- Timeline steps -->
+    <rect x="10" y="25" width="120" height="48" rx="6" fill="#2563eb"/><text x="70" y="46" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">1. Client submits</text><text x="70" y="60" text-anchor="middle" font-size="8" fill="#bfdbfe">via Portal UI</text>
+    <rect x="148" y="25" width="120" height="48" rx="6" fill="#16a34a"/><text x="208" y="46" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">2. Gateway</text><text x="208" y="60" text-anchor="middle" font-size="8" fill="#bbf7d0">JWT auth + route</text>
+    <rect x="286" y="25" width="120" height="48" rx="6" fill="#d97706"/><text x="346" y="46" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">3. Orchestrator</text><text x="346" y="60" text-anchor="middle" font-size="8" fill="#fef3c7">Start saga</text>
+    <rect x="424" y="25" width="120" height="48" rx="6" fill="#db2777"/><text x="484" y="46" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">4. CMS Adapter</text><text x="484" y="60" text-anchor="middle" font-size="8" fill="#fce7f3">SOAP → Create order</text>
+    <rect x="562" y="25" width="120" height="48" rx="6" fill="#db2777"/><text x="622" y="46" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">5. WMS Adapter</text><text x="622" y="60" text-anchor="middle" font-size="8" fill="#fce7f3">TCP → Recv package</text>
+    <rect x="700" y="25" width="120" height="48" rx="6" fill="#7c3aed"/><text x="760" y="46" text-anchor="middle" font-size="9" fill="#fff" font-weight="600">6. ROS</text><text x="760" y="60" text-anchor="middle" font-size="8" fill="#ede9fe">REST → Optimize</text>
+
+    <!-- Arrows between steps -->
+    <line x1="130" y1="49" x2="148" y2="49" stroke="#334155" stroke-width="1.5" marker-end="url(#df)"/>
+    <line x1="268" y1="49" x2="286" y2="49" stroke="#334155" stroke-width="1.5" marker-end="url(#df)"/>
+    <line x1="406" y1="49" x2="424" y2="49" stroke="#334155" stroke-width="1.5" marker-end="url(#df)"/>
+    <line x1="544" y1="49" x2="562" y2="49" stroke="#334155" stroke-width="1.5" marker-end="url(#df)"/>
+    <line x1="682" y1="49" x2="700" y2="49" stroke="#334155" stroke-width="1.5" marker-end="url(#df)"/>
+
+    <!-- Status transitions -->
+    <text x="440" y="105" text-anchor="middle" font-size="12" fill="#1a3a6e" font-weight="700">Status Transitions &amp; Real-Time Events</text>
+
+    <rect x="40" y="120" width="120" height="32" rx="6" fill="#f1f5f9" stroke="#94a3b8"/><text x="100" y="141" text-anchor="middle" font-size="10" fill="#475569" font-weight="600">PENDING</text>
+    <rect x="190" y="120" width="120" height="32" rx="6" fill="#dbeafe" stroke="#3b82f6"/><text x="250" y="141" text-anchor="middle" font-size="10" fill="#1d4ed8" font-weight="600">ACCEPTED</text>
+    <rect x="340" y="120" width="140" height="32" rx="6" fill="#fef3c7" stroke="#f59e0b"/><text x="410" y="141" text-anchor="middle" font-size="10" fill="#b45309" font-weight="600">IN_WAREHOUSE</text>
+    <rect x="510" y="120" width="130" height="32" rx="6" fill="#e0e7ff" stroke="#6366f1"/><text x="575" y="141" text-anchor="middle" font-size="10" fill="#4338ca" font-weight="600">PROCESSING</text>
+    <rect x="670" y="120" width="130" height="32" rx="6" fill="#d1fae5" stroke="#10b981"/><text x="735" y="141" text-anchor="middle" font-size="10" fill="#059669" font-weight="600">DELIVERED ✅</text>
+
+    <line x1="160" y1="136" x2="190" y2="136" stroke="#64748b" stroke-width="1.5" marker-end="url(#df)"/>
+    <line x1="310" y1="136" x2="340" y2="136" stroke="#64748b" stroke-width="1.5" marker-end="url(#df)"/>
+    <line x1="480" y1="136" x2="510" y2="136" stroke="#64748b" stroke-width="1.5" marker-end="url(#df)"/>
+    <line x1="640" y1="136" x2="670" y2="136" stroke="#64748b" stroke-width="1.5" marker-end="url(#df)"/>
+
+    <!-- WebSocket broadcast annotations -->
+    <text x="100" y="172" text-anchor="middle" font-size="8" fill="#2563eb">📡 WS event</text>
+    <text x="250" y="172" text-anchor="middle" font-size="8" fill="#2563eb">📡 WS event</text>
+    <text x="410" y="172" text-anchor="middle" font-size="8" fill="#2563eb">📡 WS event</text>
+    <text x="575" y="172" text-anchor="middle" font-size="8" fill="#2563eb">📡 WS event</text>
+    <text x="735" y="172" text-anchor="middle" font-size="8" fill="#2563eb">📡 WS event</text>
+
+    <!-- Async path -->
+    <rect x="40" y="200" width="800" height="80" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
+    <text x="440" y="222" text-anchor="middle" font-size="11" fill="#15803d" font-weight="700">Asynchronous (High-Volume) Path</text>
+    <text x="440" y="242" text-anchor="middle" font-size="9.5" fill="#166534">Client → Gateway → RabbitMQ Queue (order.submissions) → Orchestrator Consumer → Same saga flow</text>
+    <text x="440" y="260" text-anchor="middle" font-size="9" fill="#166534">Returns QUEUED immediately. Real-time status updates pushed via WebSocket as saga progresses.</text>
+
+    <!-- Driver delivery flow -->
+    <rect x="40" y="298" width="800" height="72" rx="8" fill="#fefce8" stroke="#fde047" stroke-width="1"/>
+    <text x="440" y="320" text-anchor="middle" font-size="11" fill="#b45309" font-weight="700">Driver Delivery Confirmation</text>
+    <text x="440" y="340" text-anchor="middle" font-size="9.5" fill="#92400e">Driver → Driver App → /api/v1/delivery/update → Orchestrator updates Redis + publishes tracking event</text>
+    <text x="440" y="358" text-anchor="middle" font-size="9" fill="#92400e">Client Portal receives DELIVERED/FAILED status update in real-time via WebSocket — no refresh needed.</text>
+
+    <defs><marker id="df" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#64748b"/></marker></defs>
+  </svg>
+  <div class="fig-caption">Figure 5: Order Lifecycle — Status Transitions and Real-Time Event Flow</div>
+</div>
+
+
+<!-- ═══════════════════ 8. SECURITY ═══════════════════ -->
+<h1 class="page-break">8. Security Architecture</h1>
+
+<p>Security is implemented at every layer of the architecture:</p>
+
+<table>
+  <caption>Table 6: Security Controls</caption>
+  <thead><tr><th>Control</th><th>Implementation</th><th>Layer</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Authentication</strong></td><td>JWT tokens (HS256 algorithm, 60-minute expiry). Tokens issued on login and validated on every API request via <code>Depends(get_current_user)</code>.</td><td>Gateway</td></tr>
+    <tr><td><strong>Role-Based Access Control</strong></td><td>Three roles: <code>client</code>, <code>driver</code>, <code>admin</code>. Each endpoint enforces role checks. Clients can only view their own orders; drivers can only update deliveries.</td><td>Gateway</td></tr>
+    <tr><td><strong>Input Validation</strong></td><td>Pydantic models validate all request bodies with type checking, required fields, and constraints.</td><td>All services</td></tr>
+    <tr><td><strong>TCP Injection Prevention</strong></td><td>The <code>sanitize_field()</code> function strips pipe (<code>|</code>) and newline characters from data before constructing WMS TCP commands, preventing protocol injection attacks.</td><td>Mock WMS</td></tr>
+    <tr><td><strong>Error Sanitization</strong></td><td>Internal service URLs and stack traces are never exposed in API error responses. Generic error messages are returned to clients.</td><td>Gateway, Adapters</td></tr>
+    <tr><td><strong>Message Persistence</strong></td><td>RabbitMQ messages use <code>delivery_mode=PERSISTENT</code>, ensuring no message loss on broker restart.</td><td>Orchestrator</td></tr>
+    <tr><td><strong>Network Isolation</strong></td><td>All services run on a private Docker bridge network (<code>swiftnet</code>). Only the API Gateway port (8000) is exposed to the host.</td><td>Infrastructure</td></tr>
+    <tr><td><strong>WebSocket Security</strong></td><td>WebSocket connections require a valid JWT token as a query parameter. Expired or invalid tokens result in connection rejection.</td><td>Gateway</td></tr>
+    <tr><td><strong>CORS</strong></td><td>Cross-Origin Resource Sharing is configured on the API Gateway to control which origins can access the API.</td><td>Gateway</td></tr>
+  </tbody>
+</table>
+
+
+<!-- ═══════════════════ 9. TESTING ═══════════════════ -->
+<h1>9. Testing &amp; Demonstration</h1>
+
+<h2>9.1 Running the Platform</h2>
+<pre>
+# Clone the repository
+git clone [repository-url]
+cd SwiftTrack
+
+# Start all 9 services
+docker compose up --build -d
+
+# Verify all containers are healthy
+docker compose ps
+</pre>
+
+<h2>9.2 Accessing the Platform</h2>
+<table>
+  <thead><tr><th>Interface</th><th>URL</th><th>Credentials</th></tr></thead>
+  <tbody>
+    <tr><td>Client Portal</td><td><code>http://localhost:8000</code></td><td>megamart / pass123</td></tr>
+    <tr><td>Driver App</td><td><code>http://localhost:8000/driver</code></td><td>driver1 / pass123</td></tr>
+    <tr><td>RabbitMQ Dashboard</td><td><code>http://localhost:15672</code></td><td>guest / guest</td></tr>
+  </tbody>
+</table>
+
+<h2>9.3 Test Scenarios</h2>
+<ol>
+  <li><strong>Synchronous Order:</strong> Login as <em>megamart</em> → Submit order → Observe PENDING → ACCEPTED → IN_WAREHOUSE → PROCESSING status transitions in real-time without page refresh.</li>
+  <li><strong>Asynchronous Order:</strong> Submit via "Submit Async" → Observe QUEUED status returned immediately → Watch saga complete in background → Real-time updates via WebSocket.</li>
+  <li><strong>Driver Delivery:</strong> Login as <em>driver1</em> on Driver App → See manifest with assigned orders → Mark as DELIVERED → Verify Client Portal updates instantly.</li>
+  <li><strong>Saga Compensation:</strong> If WMS or ROS fails during order processing, observe compensating transactions roll back previously completed steps.</li>
+  <li><strong>WebSocket Real-Time:</strong> Open Client Portal and Driver App side-by-side → Submit order from client → Watch both portals update simultaneously.</li>
+</ol>
+
+
+<!-- ═══════════════════ 10. CONCLUSION ═══════════════════ -->
+<h1 class="page-break">10. Conclusion</h1>
+
+<p>The SwiftTrack middleware platform successfully addresses all six architectural challenges identified in the business scenario:</p>
+
+<table>
+  <caption>Table 7: Challenge Resolution Summary</caption>
+  <thead><tr><th>Challenge</th><th>Solution</th><th>Technology</th></tr></thead>
+  <tbody>
+    <tr><td>Heterogeneous Integration</td><td>Adapter Pattern — protocol translation</td><td>Zeep (SOAP), asyncio (TCP), httpx (REST)</td></tr>
+    <tr><td>Real-Time Tracking</td><td>Event-driven WebSocket hub</td><td>Redis Pub/Sub → WebSocket</td></tr>
+    <tr><td>High-Volume Async Processing</td><td>Message queue decoupling</td><td>RabbitMQ persistent queues</td></tr>
+    <tr><td>Distributed Transactions</td><td>Saga Pattern with compensation</td><td>Orchestrator service</td></tr>
+    <tr><td>Scalability &amp; Resilience</td><td>Containerized microservices</td><td>Docker Compose, health checks</td></tr>
+    <tr><td>Security</td><td>Multi-layered auth &amp; validation</td><td>JWT, RBAC, Pydantic, input sanitization</td></tr>
+  </tbody>
+</table>
+
+<p>The architecture leverages exclusively open-source technologies and follows established enterprise integration patterns (Adapter, API Gateway, Saga, Publish-Subscribe) to create a modular, scalable, and maintainable middleware solution. The containerized deployment via Docker Compose enables reproducible builds and simplified operations, while the event-driven architecture ensures real-time visibility across all stakeholders.</p>
+
+
+<!-- ═══════════════════ 11. REFERENCES ═══════════════════ -->
+<h1>11. References</h1>
+<ol style="font-size:10pt;line-height:2;">
+  <li>Hohpe, G. &amp; Woolf, B. (2003). <em>Enterprise Integration Patterns</em>. Addison-Wesley.</li>
+  <li>Richardson, C. (2018). <em>Microservices Patterns</em>. Manning Publications. Chapter 4: Managing Transactions with Sagas.</li>
+  <li>FastAPI Documentation. <em>https://fastapi.tiangolo.com/</em></li>
+  <li>RabbitMQ Documentation. <em>https://www.rabbitmq.com/documentation.html</em></li>
+  <li>Redis Documentation. <em>https://redis.io/documentation</em></li>
+  <li>Docker Compose Documentation. <em>https://docs.docker.com/compose/</em></li>
+  <li>Spyne Documentation. <em>https://spyne.io/</em></li>
+  <li>Zeep SOAP Client. <em>https://docs.python-zeep.org/</em></li>
+  <li>JSON Web Tokens (RFC 7519). <em>https://datatracker.ietf.org/doc/html/rfc7519</em></li>
+  <li>Newman, S. (2021). <em>Building Microservices</em>, 2nd Edition. O'Reilly Media.</li>
+</ol>
+
+</body>
+</html>
