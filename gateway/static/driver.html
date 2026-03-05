@@ -5,362 +5,296 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SwiftTrack – Driver App</title>
     <style>
-        :root {
-            --primary: #059669;
-            --primary-dark: #047857;
-            --success: #16a34a;
-            --warning: #d97706;
-            --danger: #dc2626;
-            --bg: #f0fdf4;
-            --card: #ffffff;
-            --text: #1e293b;
-            --text-light: #64748b;
-            --border: #e2e8f0;
-        }
+        :root { --primary: #059669; --primary-dark: #047857; --bg: #f0fdf4; --card: #ffffff; --text: #1e293b; --text-light: #64748b; --border: #e2e8f0; --danger: #dc2626; --warning: #d97706; }
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); max-width: 480px; margin: 0 auto; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); max-width: 480px; margin: 0 auto; min-height: 100vh; }
 
-        .header { background: var(--primary); color: white; padding: 1rem 1.2rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; }
+        .header { background: var(--primary); color: white; padding: 1rem 1.2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,.15); position: sticky; top: 0; z-index: 10; }
         .header h1 { font-size: 1.2rem; }
-        .ws-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: .3rem; }
-        .ws-dot.on { background: #4ade80; }
+        .header-right { display: flex; align-items: center; gap: .6rem; }
+        .ws-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .ws-dot.on { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
         .ws-dot.off { background: #f87171; }
-        .btn { padding: .5rem 1rem; border: none; border-radius: 8px; font-size: .85rem; cursor: pointer; font-weight: 600; transition: all .2s; }
+
+        .btn { padding: .5rem 1rem; border: none; border-radius: 6px; font-size: .85rem; cursor: pointer; transition: .2s; font-weight: 500; }
         .btn-primary { background: var(--primary); color: white; }
-        .btn-success { background: var(--success); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
         .btn-danger { background: var(--danger); color: white; }
-        .btn-warning { background: var(--warning); color: white; }
-        .btn-sm { padding: .3rem .7rem; font-size: .8rem; }
-        .btn:disabled { opacity: .5; cursor: not-allowed; }
+        .btn-sm { padding: .3rem .8rem; font-size: .78rem; }
 
-        .container { padding: 1rem; }
+        .live-badge { display: inline-flex; align-items: center; gap: 3px; font-size: .65rem; font-weight: 700; color: #16a34a; text-transform: uppercase; }
+        .live-badge .dot { width: 5px; height: 5px; background: #16a34a; border-radius: 50%; animation: livePulse 1.5s infinite; }
+        @keyframes livePulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
 
-        /* Login */
-        .login-box { padding: 2rem 1.5rem; }
-        .login-box h2 { text-align: center; margin-bottom: 1.5rem; }
+        .login-wrap { display: flex; justify-content: center; align-items: center; min-height: 80vh; padding: 1rem; }
+        .login-card { background: var(--card); padding: 2rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,.08); width: 100%; }
+        .login-card h2 { margin-bottom: 1.5rem; text-align: center; }
         .form-group { margin-bottom: 1rem; }
         .form-group label { display: block; margin-bottom: .3rem; font-size: .85rem; color: var(--text-light); }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: .6rem; border: 1px solid var(--border); border-radius: 8px; font-size: .9rem; }
-        .login-box .btn { width: 100%; padding: .7rem; }
-        .hint { text-align: center; font-size: .8rem; color: var(--text-light); margin-top: .8rem; }
+        .form-group input { width: 100%; padding: .6rem; border: 1px solid var(--border); border-radius: 6px; font-size: .9rem; }
+        .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(5,150,105,.15); }
+        .login-card .btn { width: 100%; padding: .7rem; font-size: 1rem; }
+        .login-hint { margin-top: 1rem; font-size: .78rem; color: var(--text-light); text-align: center; }
 
-        /* Cards */
-        .card { background: var(--card); border-radius: 12px; padding: 1.2rem; margin-bottom: 1rem; border: 1px solid var(--border); box-shadow: 0 2px 8px rgba(0,0,0,.04); }
-        .card h3 { font-size: .95rem; margin-bottom: .8rem; color: var(--primary); }
+        .dashboard { display: none; }
+        .dashboard.active { display: block; }
 
-        /* Route Stop */
-        .stop { border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-bottom: .8rem; background: var(--card); position: relative; }
-        .stop.completed { opacity: .5; border-left: 4px solid var(--success); }
-        .stop.active { border-left: 4px solid var(--primary); background: #ecfdf5; }
-        .stop .seq { position: absolute; top: -8px; left: -8px; width: 24px; height: 24px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: .75rem; font-weight: 700; }
-        .stop .order-id { font-weight: 700; font-size: .9rem; }
-        .stop .address { font-size: .85rem; color: var(--text-light); margin: .3rem 0; }
-        .stop .eta { font-size: .8rem; color: var(--primary); }
-        .stop .actions { margin-top: .8rem; display: flex; gap: .5rem; flex-wrap: wrap; }
+        .summary { display: grid; grid-template-columns: repeat(3,1fr); gap: .6rem; padding: 1rem; }
+        .sum-card { background: var(--card); border-radius: 8px; padding: .8rem; text-align: center; border: 1px solid var(--border); }
+        .sum-card .val { font-size: 1.6rem; font-weight: 700; color: var(--primary); transition: transform .3s; }
+        .sum-card .lbl { font-size: .7rem; color: var(--text-light); }
+        @keyframes sumPulse { 0% { transform:scale(1); } 50% { transform:scale(1.25); } 100% { transform:scale(1); } }
+        .sum-card .val.pulse { animation: sumPulse .4s ease; }
 
-        /* Status badges */
-        .badge { display: inline-block; padding: .15rem .5rem; border-radius: 10px; font-size: .75rem; font-weight: 600; }
-        .badge-success { background: #d1fae5; color: #059669; }
-        .badge-warning { background: #fef3c7; color: #b45309; }
-        .badge-danger { background: #fee2e2; color: #dc2626; }
-        .badge-info { background: #dbeafe; color: #1d4ed8; }
+        .section { padding: 0 1rem; margin-bottom: 1rem; }
+        .section h3 { font-size: .95rem; margin-bottom: .6rem; color: var(--primary); display: flex; align-items: center; gap: .4rem; }
 
-        /* Notification feed */
-        .notification { padding: .6rem; border-left: 3px solid var(--primary); margin-bottom: .4rem; background: white; border-radius: 0 6px 6px 0; font-size: .85rem; }
-        .notification .time { font-size: .7rem; color: var(--text-light); }
+        .stop-card { background: var(--card); border-radius: 8px; padding: 1rem; margin-bottom: .6rem; border: 1px solid var(--border); transition: border-color .3s, background .3s; position: relative; }
+        .stop-card.delivered { border-left: 4px solid var(--primary); opacity: .7; }
+        .stop-card.failed { border-left: 4px solid var(--danger); }
+        .stop-card .oid { font-weight: 600; font-size: .9rem; }
+        .stop-card .addr { font-size: .82rem; color: var(--text-light); margin: .3rem 0; }
+        .stop-card .bottom { display: flex; justify-content: space-between; align-items: center; gap: .5rem; flex-wrap: wrap; }
+        .status-badge { padding: .2rem .6rem; border-radius: 12px; font-size: .72rem; font-weight: 600; display: inline-block; }
+        .status-ACCEPTED, .status-PROCESSING { background: #dbeafe; color: #1d4ed8; }
+        .status-IN_WAREHOUSE { background: #fef3c7; color: #b45309; }
+        .status-IN_TRANSIT, .status-LOADED { background: #d1fae5; color: #059669; }
+        .status-DELIVERED { background: #059669; color: white; }
+        .status-FAILED, .status-CANCELLED { background: #fee2e2; color: #dc2626; }
+        .status-PENDING, .status-QUEUED { background: #f1f5f9; color: #64748b; }
 
-        /* Modal */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,.5); display: none; z-index: 100; align-items: center; justify-content: center; }
-        .modal-overlay.show { display: flex; }
-        .modal { background: white; border-radius: 16px; padding: 1.5rem; width: 90%; max-width: 400px; }
-        .modal h3 { margin-bottom: 1rem; }
+        @keyframes stopFlash { 0% { background: #d1fae5; } 100% { background: var(--card); } }
+        .stop-card.flash { animation: stopFlash 2s ease-out; }
 
-        .hidden { display: none; }
+        .notif-list { max-height: 250px; overflow-y: auto; }
+        .notif { padding: .5rem; border-left: 3px solid var(--primary); background: #f0fdf4; border-radius: 0 6px 6px 0; margin-bottom: .4rem; font-size: .8rem; animation: slideIn .3s ease; }
+        .notif.alert { border-left-color: var(--danger); background: #fef2f2; }
+        .notif .t { font-size: .7rem; color: var(--text-light); }
+        @keyframes slideIn { from { opacity:0; transform:translateX(-10px); } to { opacity:1; transform:translateX(0); } }
 
-        /* Toast */
-        .toast-area { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); z-index: 200; }
-        .toast { background: var(--card); padding: .8rem 1.2rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,.15); margin-bottom: .4rem; font-size: .85rem; border-left: 4px solid var(--primary); animation: fadeIn .3s; max-width: 350px; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } }
-
-        .summary-row { display: flex; justify-content: space-between; padding: .3rem 0; font-size: .85rem; border-bottom: 1px solid var(--border); }
+        .toast-container { position: fixed; top: 60px; left: 50%; transform: translateX(-50%); z-index: 100; width: 90%; max-width: 400px; }
+        .toast { background: var(--card); padding: .8rem 1rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,.15); margin-bottom: .4rem; animation: slideIn .3s; border-left: 4px solid var(--primary); font-size: .85rem; }
+        .toast.success { border-left-color: var(--primary); }
+        .toast.error { border-left-color: var(--danger); }
     </style>
 </head>
 <body>
 
-<div class="toast-area" id="toastArea"></div>
+<div class="toast-container" id="toastContainer"></div>
 
 <!-- Login -->
 <div id="loginScreen">
-    <div class="header">
-        <h1>🚛 SwiftTrack Driver</h1>
-    </div>
-    <div class="login-box">
-        <h2>Driver Sign In</h2>
-        <div class="form-group">
-            <label>Username</label>
-            <input type="text" id="loginUser" value="driver1" placeholder="driver1">
+    <div class="header"><h1>🚚 SwiftTrack Driver</h1></div>
+    <div class="login-wrap">
+        <div class="login-card">
+            <h2>🔐 Driver Sign-In</h2>
+            <div class="form-group"><label>Username</label><input id="loginUser" value="driver1" placeholder="e.g. driver1"></div>
+            <div class="form-group"><label>Password</label><input id="loginPass" type="password" value="pass123"></div>
+            <button class="btn btn-primary" onclick="login()">Sign In</button>
+            <p class="login-hint">Demo: driver1 / driver2 (pass: pass123)</p>
         </div>
-        <div class="form-group">
-            <label>Password</label>
-            <input type="password" id="loginPass" value="pass123">
-        </div>
-        <button class="btn btn-primary" onclick="login()">Sign In</button>
-        <p class="hint">Demo: driver1 / driver2 (pass: pass123)</p>
     </div>
 </div>
 
-<!-- Main App -->
-<div id="mainApp" class="hidden">
+<!-- Dashboard -->
+<div id="dashboard" class="dashboard">
     <div class="header">
-        <div>
+        <div style="display:flex;align-items:center;gap:.5rem;">
+            <h1>🚚 SwiftTrack</h1>
+            <span class="live-badge" id="liveBadge" style="display:none;"><span class="dot"></span> LIVE</span>
+        </div>
+        <div class="header-right">
             <span class="ws-dot off" id="wsDot"></span>
-            <strong>🚛 SwiftTrack</strong>
-        </div>
-        <div>
-            <span id="driverName" style="font-size:.85rem;margin-right:.5rem;"></span>
-            <button class="btn btn-sm" style="background:rgba(255,255,255,.2);color:white;" onclick="logout()">Logout</button>
+            <span id="driverName" style="font-size:.82rem;"></span>
+            <button class="btn btn-danger btn-sm" onclick="logout()">Out</button>
         </div>
     </div>
 
-    <div class="container">
-        <!-- Summary -->
-        <div class="card">
-            <h3>📊 Today's Summary</h3>
-            <div class="summary-row"><span>Total Stops</span><span id="totalStops">0</span></div>
-            <div class="summary-row"><span>Completed</span><span id="completedStops">0</span></div>
-            <div class="summary-row"><span>Remaining</span><span id="remainingStops">0</span></div>
-            <div class="summary-row"><span>Total Distance</span><span id="totalDist">0 km</span></div>
-        </div>
-
-        <!-- Route -->
-        <div class="card">
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-                <h3>🗺️ Delivery Route</h3>
-                <button class="btn btn-sm btn-primary" onclick="loadManifest()">🔄 Refresh</button>
-            </div>
-            <div id="routeStops">
-                <p style="text-align:center;color:var(--text-light);padding:2rem 0;">Loading route...</p>
-            </div>
-        </div>
-
-        <!-- Notifications -->
-        <div class="card">
-            <h3>🔔 Live Notifications</h3>
-            <div id="notifications" style="max-height:200px;overflow-y:auto;">
-                <div class="notification"><div class="time">--</div>Waiting for updates...</div>
-            </div>
-        </div>
+    <div class="summary">
+        <div class="sum-card"><div class="val" id="sTotal">0</div><div class="lbl">Total Stops</div></div>
+        <div class="sum-card"><div class="val" id="sDelivered">0</div><div class="lbl">Delivered</div></div>
+        <div class="sum-card"><div class="val" id="sPending">0</div><div class="lbl">Pending</div></div>
     </div>
-</div>
 
-<!-- Delivery Confirmation Modal -->
-<div class="modal-overlay" id="deliveryModal">
-    <div class="modal">
-        <h3>📦 Confirm Delivery</h3>
-        <input type="hidden" id="modalOrderId">
-        <div class="form-group">
-            <label>Result</label>
-            <select id="deliveryResult">
-                <option value="DELIVERED">✅ Delivered Successfully</option>
-                <option value="FAILED_NOT_HOME">🏠 Recipient Not Home</option>
-                <option value="FAILED_WRONG_ADDRESS">📍 Wrong Address</option>
-                <option value="FAILED_REFUSED">🚫 Delivery Refused</option>
-                <option value="FAILED_OTHER">❓ Other</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>Notes (optional)</label>
-            <textarea id="deliveryNotes" rows="2" placeholder="Any additional notes..."></textarea>
-        </div>
-        <div class="form-group">
-            <label>Proof of Delivery</label>
-            <input type="file" id="proofPhoto" accept="image/*" capture="environment">
-            <p style="font-size:.75rem;color:var(--text-light);margin-top:.2rem;">📸 Take a photo or capture signature</p>
-        </div>
-        <div style="display:flex;gap:.5rem;margin-top:1rem;">
-            <button class="btn btn-success" onclick="confirmDelivery()" style="flex:1;">Confirm</button>
-            <button class="btn" style="flex:1;background:#f1f5f9;" onclick="closeModal()">Cancel</button>
+    <div class="section">
+        <h3>📍 Delivery Manifest</h3>
+        <div id="manifest"><p style="color:var(--text-light);font-size:.85rem;">Loading manifest...</p></div>
+    </div>
+
+    <div class="section">
+        <h3>📡 Notifications</h3>
+        <div class="notif-list" id="notifList">
+            <div class="notif"><div class="t">Waiting...</div><div>Events will appear here in real-time</div></div>
         </div>
     </div>
 </div>
 
 <script>
-let token = null, userId = null, userName = null, ws = null;
-let deliveryStatus = {};  // orderId → status
+let token = null, userId = null, driverName = '';
+let ws = null, keepAliveTimer = null, reloadTimer = null;
+let currentManifest = {};  // order_id → stop data cache
 const API = '';
 
-function toast(msg, type='info') {
-    const area = document.getElementById('toastArea');
+function showToast(msg, type='info') {
+    const c = document.getElementById('toastContainer');
     const t = document.createElement('div');
-    t.className = 'toast';
-    t.style.borderLeftColor = type==='success'?'#16a34a':type==='error'?'#dc2626':'#059669';
+    t.className = `toast ${type}`;
     t.textContent = msg;
-    area.appendChild(t);
+    c.appendChild(t);
     setTimeout(() => t.remove(), 4000);
 }
 
 async function login() {
-    const username = document.getElementById('loginUser').value;
-    const password = document.getElementById('loginPass').value;
+    const u = document.getElementById('loginUser').value, p = document.getElementById('loginPass').value;
     try {
-        const resp = await fetch(`${API}/api/v1/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password }),
+        const r = await fetch(`${API}/api/v1/auth/login`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: u, password: p }),
         });
-        if (!resp.ok) throw new Error('Invalid credentials');
-        const data = await resp.json();
-        if (data.role !== 'driver' && data.role !== 'admin') {
-            toast('This app is for drivers only', 'error');
-            return;
-        }
-        token = data.access_token;
-        userId = data.user_id;
-        userName = data.name;
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('mainApp').classList.remove('hidden');
-        document.getElementById('driverName').textContent = userName;
-        connectWS();
+        if (!r.ok) throw new Error('Invalid credentials');
+        const d = await r.json();
+        if (d.role !== 'driver') throw new Error('This portal is for drivers only');
+        token = d.access_token; userId = d.user_id; driverName = d.name;
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('dashboard').classList.add('active');
+        document.getElementById('driverName').textContent = driverName;
+        connectWebSocket();
         loadManifest();
-        toast(`Welcome, ${userName}!`, 'success');
-    } catch (e) {
-        toast(e.message, 'error');
-    }
+        showToast(`Welcome, ${driverName}!`, 'success');
+    } catch (e) { showToast(e.message, 'error'); }
 }
 
 function logout() {
     token = null;
-    if (ws) ws.close();
-    document.getElementById('loginScreen').classList.remove('hidden');
-    document.getElementById('mainApp').classList.add('hidden');
+    if (ws) { ws.onclose = null; ws.close(); ws = null; }
+    if (keepAliveTimer) clearInterval(keepAliveTimer);
+    document.getElementById('loginScreen').style.display = '';
+    document.getElementById('dashboard').classList.remove('active');
 }
 
-function headers() {
-    return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+function authHeaders() { return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }; }
+
+// ── Summary pulse animation ──
+function updateSum(id, val) {
+    const el = document.getElementById(id);
+    const old = parseInt(el.textContent) || 0;
+    if (old !== val) {
+        el.textContent = val;
+        el.classList.remove('pulse');
+        void el.offsetWidth;
+        el.classList.add('pulse');
+    }
 }
 
+// ── Load manifest from API + flash changed stops ──
 async function loadManifest() {
     try {
-        const resp = await fetch(`${API}/api/v1/driver/manifest`, { headers: headers() });
-        const data = await resp.json();
-        const routes = data.routes || [];
-        renderRoute(routes);
-    } catch (e) {
-        toast('Failed to load manifest', 'error');
-    }
-}
+        const r = await fetch(`${API}/api/v1/driver/manifest`, { headers: authHeaders() });
+        const data = await r.json();
+        const stops = data.stops || [];
 
-function renderRoute(routes) {
-    const container = document.getElementById('routeStops');
-    if (!routes.length) {
-        container.innerHTML = '<p style="text-align:center;color:var(--text-light);padding:2rem;">No routes assigned yet. Check back later!</p>';
-        updateSummary(0, 0, 0);
-        return;
-    }
+        const prev = { ...currentManifest };
+        currentManifest = {};
+        stops.forEach(s => { currentManifest[s.order_id] = s; });
 
-    let allStops = [];
-    let totalDist = 0;
-    routes.forEach(route => {
-        totalDist += route.total_distance_km || 0;
-        (route.stops || []).forEach(stop => {
-            allStops.push({ ...stop, route_id: route.route_id });
-        });
-    });
+        updateSum('sTotal', stops.length);
+        updateSum('sDelivered', stops.filter(s => s.status === 'DELIVERED').length);
+        updateSum('sPending', stops.filter(s => !['DELIVERED','FAILED','CANCELLED'].includes(s.status)).length);
 
-    const completed = allStops.filter(s => deliveryStatus[s.order_id] === 'done').length;
-    updateSummary(allStops.length, completed, totalDist);
+        const el = document.getElementById('manifest');
+        if (!stops.length) { el.innerHTML = '<p style="color:var(--text-light);font-size:.85rem;">No deliveries assigned yet.</p>'; return; }
 
-    container.innerHTML = allStops.map(stop => {
-        const done = deliveryStatus[stop.order_id] === 'done';
-        const cls = done ? 'completed' : (stop.sequence === 1 && !done ? 'active' : '');
-        return `
-            <div class="stop ${cls}">
-                <div class="seq">${stop.sequence}</div>
-                <div class="order-id">${stop.order_id}</div>
-                <div class="address">📍 ${stop.street || stop.delivery_address || '-'}, ${stop.city || ''}</div>
-                ${stop.recipient_name ? `<div style="font-size:.85rem;">👤 ${stop.recipient_name}</div>` : ''}
-                <div class="eta">⏰ ETA: ${stop.estimated_arrival || '-'}</div>
-                ${stop.status ? `<div><span class="badge badge-info">${stop.status}</span></div>` : ''}
-                <div class="actions">
-                    ${done ? '<span class="badge badge-success">✅ Completed</span>' : `
-                        <button class="btn btn-sm btn-success" onclick="openDeliveryModal('${stop.order_id}')">✅ Deliver</button>
-                        <button class="btn btn-sm btn-warning" onclick="openDeliveryModal('${stop.order_id}', true)">⚠️ Failed</button>
-                    `}
+        el.innerHTML = stops.map((s, i) => {
+            const changed = prev[s.order_id] && prev[s.order_id].status !== s.status;
+            const cls = s.status === 'DELIVERED' ? 'delivered' : s.status === 'FAILED' ? 'failed' : '';
+            const flash = changed ? 'flash' : '';
+            return `<div class="stop-card ${cls} ${flash}" data-oid="${s.order_id}">
+                <div class="oid">Stop ${i+1}: ${s.order_id}</div>
+                <div class="addr">📍 ${s.delivery_address || 'Address pending'}</div>
+                <div class="bottom">
+                    <span class="status-badge status-${s.status}">${s.status}</span>
+                    ${s.status !== 'DELIVERED' && s.status !== 'FAILED' ? `
+                        <div>
+                            <button class="btn btn-primary btn-sm" onclick="confirmDelivery('${s.order_id}','DELIVERED')">✅ Delivered</button>
+                            <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;" onclick="confirmDelivery('${s.order_id}','FAILED')">❌ Failed</button>
+                        </div>` : ''}
                 </div>
-            </div>
-        `;
-    }).join('');
+            </div>`;
+        }).join('');
+    } catch (e) { showToast('Failed to load manifest', 'error'); }
 }
 
-function updateSummary(total, completed, dist) {
-    document.getElementById('totalStops').textContent = total;
-    document.getElementById('completedStops').textContent = completed;
-    document.getElementById('remainingStops').textContent = total - completed;
-    document.getElementById('totalDist').textContent = (dist || 0).toFixed(1) + ' km';
+// Debounce rapid WS events into single reload
+function debouncedReload() {
+    if (reloadTimer) clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(() => loadManifest(), 300);
 }
 
-function openDeliveryModal(orderId, failed = false) {
-    document.getElementById('modalOrderId').value = orderId;
-    document.getElementById('deliveryResult').value = failed ? 'FAILED_NOT_HOME' : 'DELIVERED';
-    document.getElementById('deliveryNotes').value = '';
-    document.getElementById('deliveryModal').classList.add('show');
-}
-
-function closeModal() {
-    document.getElementById('deliveryModal').classList.remove('show');
-}
-
-async function confirmDelivery() {
-    const orderId = document.getElementById('modalOrderId').value;
-    const result = document.getElementById('deliveryResult').value;
-    const notes = document.getElementById('deliveryNotes').value;
-
+async function confirmDelivery(oid, result) {
     try {
-        const resp = await fetch(`${API}/api/v1/delivery/update`, {
-            method: 'POST',
-            headers: headers(),
-            body: JSON.stringify({ order_id: orderId, result, notes }),
+        const r = await fetch(`${API}/api/v1/delivery/update`, {
+            method: 'POST', headers: authHeaders(),
+            body: JSON.stringify({ order_id: oid, result: result }),
         });
-        const data = await resp.json();
-        deliveryStatus[orderId] = 'done';
-        closeModal();
-        toast(`Delivery ${result === 'DELIVERED' ? 'completed' : 'reported'} for ${orderId}`, result === 'DELIVERED' ? 'success' : 'error');
-        loadManifest();
-    } catch (e) {
-        toast('Failed to update delivery: ' + e.message, 'error');
-    }
+        const d = await r.json();
+        showToast(`${oid} → ${result}`, result === 'DELIVERED' ? 'success' : 'error');
+        setTimeout(loadManifest, 300);
+    } catch (e) { showToast('Failed: ' + e.message, 'error'); }
 }
 
-function connectWS() {
+// ── WebSocket ──
+function connectWebSocket() {
+    if (ws && ws.readyState === WebSocket.OPEN) return;
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
     ws = new WebSocket(`${proto}//${location.host}/ws/tracking?token=${token}`);
+
     ws.onopen = () => {
-        document.getElementById('wsDot').className = 'ws-dot on';
+        setWs(true);
+        console.log('[WS] Connected');
     };
     ws.onclose = () => {
-        document.getElementById('wsDot').className = 'ws-dot off';
-        setTimeout(connectWS, 3000);
+        setWs(false);
+        console.log('[WS] Disconnected. Reconnecting in 3s...');
+        if (token) setTimeout(connectWebSocket, 3000);
     };
     ws.onmessage = (e) => {
         try {
             const data = JSON.parse(e.data);
-            addNotification(data);
-            if (data.event_type === 'route.update') {
-                toast('🗺️ Route updated! Refreshing...', 'info');
-                loadManifest();
-            }
-        } catch (err) {}
+            if (data.event_type === 'connected') return;
+
+            addNotif(data);
+
+            // ── ANY event triggers debounced manifest reload ──
+            if (data.event_type) debouncedReload();
+
+            const s = data.status, oid = data.order_id || '';
+            if (s === 'DELIVERED')       showToast(`✅ ${oid} delivered!`, 'success');
+            else if (s === 'FAILED')     showToast(`❌ ${oid} failed`, 'error');
+            else if (s === 'IN_TRANSIT') showToast(`🚚 ${oid} in transit`, 'info');
+            else if (s === 'IN_WAREHOUSE') showToast(`📦 ${oid} in warehouse`, 'info');
+        } catch(_) {}
     };
-    setInterval(() => { if (ws?.readyState === WebSocket.OPEN) ws.send('ping'); }, 30000);
+
+    if (keepAliveTimer) clearInterval(keepAliveTimer);
+    keepAliveTimer = setInterval(() => { if (ws?.readyState === WebSocket.OPEN) ws.send('ping'); }, 25000);
 }
 
-function addNotification(data) {
-    const container = document.getElementById('notifications');
+function setWs(on) {
+    document.getElementById('wsDot').className = `ws-dot ${on ? 'on' : 'off'}`;
+    document.getElementById('liveBadge').style.display = on ? 'inline-flex' : 'none';
+}
+
+function addNotif(data) {
+    const list = document.getElementById('notifList');
+    if (list.children.length === 1 && list.firstElementChild?.querySelector('.t')?.textContent === 'Waiting...') list.innerHTML = '';
     const n = document.createElement('div');
-    n.className = 'notification';
-    n.innerHTML = `<div class="time">${new Date().toLocaleTimeString()}</div><div>${data.message || data.event_type || JSON.stringify(data)}</div>`;
-    container.insertBefore(n, container.firstChild);
-    while (container.children.length > 30) container.removeChild(container.lastChild);
+    const isAlert = data.status === 'FAILED' || data.status === 'CANCELLED';
+    n.className = `notif ${isAlert ? 'alert' : ''}`;
+    n.innerHTML = `<div class="t">${new Date().toLocaleTimeString()}</div>
+        <div><strong>${data.event_type || 'event'}</strong>: ${data.message || JSON.stringify(data)}</div>
+        ${data.order_id ? `<div style="font-size:.75rem;color:var(--text-light);">${data.order_id} → <span class="status-badge status-${data.status}">${data.status||'-'}</span></div>` : ''}`;
+    list.insertBefore(n, list.firstChild);
+    while (list.children.length > 40) list.removeChild(list.lastChild);
 }
 </script>
 </body>

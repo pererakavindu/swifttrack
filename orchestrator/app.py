@@ -310,6 +310,7 @@ async def execute_order_saga(saga_id: str, req: SubmitOrderRequest) -> dict:
     })
 
     # Store order details in Redis for quick lookups
+    driver_id = "DRV-001"  # Assigned by ROS optimizer
     await redis_client.hset(
         f"order:{saga['cms_order_id']}",
         mapping={
@@ -319,14 +320,16 @@ async def execute_order_saga(saga_id: str, req: SubmitOrderRequest) -> dict:
             "delivery_address": f"{req.delivery_street}, {req.delivery_city}",
             "package_id": saga["wms_package_id"],
             "route_id": saga["ros_route_id"] or "",
+            "driver_id": driver_id,
             "status": "PROCESSING",
             "priority": req.priority,
             "created_at": saga["created_at"],
         },
     )
 
-    # Add to client's order list
+    # Add to client's order list and driver's order list
     await redis_client.sadd(f"client:{req.client_id}:orders", saga["cms_order_id"])
+    await redis_client.sadd(f"driver:{driver_id}:orders", saga["cms_order_id"])
 
     return saga
 

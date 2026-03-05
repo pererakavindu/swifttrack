@@ -19,8 +19,7 @@
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
-        
-        /* Header */
+
         .header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
         .header h1 { font-size: 1.4rem; }
         .header .logo { display: flex; align-items: center; gap: .6rem; }
@@ -28,7 +27,7 @@
         .header .user-info { display: flex; align-items: center; gap: 1rem; }
         .header .user-info span { font-size: .9rem; opacity: .9; }
         .ws-status { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-        .ws-status.connected { background: #4ade80; }
+        .ws-status.connected { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
         .ws-status.disconnected { background: #f87171; }
         .btn { padding: .5rem 1.2rem; border: none; border-radius: 6px; font-size: .85rem; cursor: pointer; transition: all .2s; font-weight: 500; }
         .btn-primary { background: var(--primary); color: white; }
@@ -37,10 +36,8 @@
         .btn-danger:hover { background: #b91c1c; }
         .btn-sm { padding: .3rem .8rem; font-size: .8rem; }
 
-        /* Layout */
         .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
-        
-        /* Login */
+
         .login-container { display: flex; justify-content: center; align-items: center; min-height: 80vh; }
         .login-card { background: var(--card); padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,.08); width: 380px; }
         .login-card h2 { margin-bottom: 1.5rem; text-align: center; }
@@ -51,20 +48,17 @@
         .login-card .btn { width: 100%; padding: .7rem; font-size: 1rem; }
         .login-hint { margin-top: 1rem; font-size: .8rem; color: var(--text-light); text-align: center; }
 
-        /* Dashboard */
         .dashboard { display: none; }
         .dashboard.active { display: block; }
         .tabs { display: flex; gap: .5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); padding-bottom: .5rem; }
-        .tab { padding: .5rem 1.2rem; border: none; background: none; cursor: pointer; font-size: .9rem; color: var(--text-light); border-radius: 6px 6px 0 0; }
+        .tab { padding: .5rem 1.2rem; border: none; background: none; cursor: pointer; font-size: .9rem; color: var(--text-light); border-radius: 6px 6px 0 0; transition: .2s; }
         .tab.active { background: var(--primary); color: white; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* Cards */
         .card { background: var(--card); border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,.05); padding: 1.5rem; margin-bottom: 1rem; border: 1px solid var(--border); }
         .card h3 { font-size: 1rem; margin-bottom: 1rem; color: var(--primary); }
-        
-        /* Orders Table */
+
         .orders-table { width: 100%; border-collapse: collapse; }
         .orders-table th, .orders-table td { padding: .6rem .8rem; text-align: left; border-bottom: 1px solid var(--border); font-size: .85rem; }
         .orders-table th { background: var(--bg); font-weight: 600; color: var(--text-light); }
@@ -76,25 +70,34 @@
         .status-FAILED, .status-CANCELLED { background: #fee2e2; color: #dc2626; }
         .status-PENDING, .status-QUEUED { background: #f1f5f9; color: #64748b; }
 
-        /* Live feed */
-        .live-feed { max-height: 300px; overflow-y: auto; }
-        .feed-item { padding: .6rem; border-left: 3px solid var(--primary); margin-bottom: .5rem; background: var(--bg); border-radius: 0 6px 6px 0; font-size: .85rem; }
+        /* Row flash on real-time update */
+        @keyframes rowFlash { 0% { background: #dbeafe; } 100% { background: transparent; } }
+        .orders-table tr.flash-update { animation: rowFlash 2s ease-out; }
+
+        /* Stat pulse on change */
+        @keyframes statPulse { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+        .stat-card .value.pulse { animation: statPulse .4s ease; }
+
+        .live-feed { max-height: 350px; overflow-y: auto; }
+        .feed-item { padding: .6rem; border-left: 3px solid var(--primary); margin-bottom: .5rem; background: var(--bg); border-radius: 0 6px 6px 0; font-size: .85rem; animation: feedSlide .3s ease; }
+        @keyframes feedSlide { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
         .feed-item .time { color: var(--text-light); font-size: .75rem; }
-        
-        /* Stats */
+        .feed-item.delivered { border-left-color: var(--success); }
+        .feed-item.failed { border-left-color: var(--danger); }
+        .feed-item.warehouse { border-left-color: var(--warning); }
+
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-        .stat-card { background: var(--card); border-radius: 10px; padding: 1.2rem; text-align: center; border: 1px solid var(--border); }
-        .stat-card .value { font-size: 2rem; font-weight: 700; color: var(--primary); }
+        .stat-card { background: var(--card); border-radius: 10px; padding: 1.2rem; text-align: center; border: 1px solid var(--border); transition: border-color .3s; }
+        .stat-card .value { font-size: 2rem; font-weight: 700; color: var(--primary); transition: transform .3s; }
         .stat-card .label { font-size: .8rem; color: var(--text-light); margin-top: .3rem; }
 
-        /* Order form grid */
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
         .form-grid .full { grid-column: 1 / -1; }
-        .items-list { margin: .5rem 0; }
-        .item-row { display: flex; gap: .5rem; align-items: center; margin-bottom: .3rem; }
-        .item-row input { flex: 1; }
 
-        /* Notification toast */
+        .live-badge { display: inline-flex; align-items: center; gap: 4px; font-size: .7rem; font-weight: 700; color: #16a34a; text-transform: uppercase; letter-spacing: .05em; }
+        .live-badge .dot { width: 6px; height: 6px; background: #16a34a; border-radius: 50%; animation: livePulse 1.5s infinite; }
+        @keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
         .toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 1000; }
         .toast { background: var(--card); padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,.15); margin-bottom: .5rem; animation: slideIn .3s ease; border-left: 4px solid var(--primary); max-width: 350px; }
         .toast.success { border-left-color: var(--success); }
@@ -106,7 +109,6 @@
 </head>
 <body>
 
-<!-- Toast Container -->
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- Login Screen -->
@@ -150,32 +152,26 @@
     </div>
 
     <div class="container">
-        <!-- Stats -->
-        <div class="stats-grid" id="statsGrid">
+        <div class="stats-grid">
             <div class="stat-card"><div class="value" id="statTotal">0</div><div class="label">Total Orders</div></div>
             <div class="stat-card"><div class="value" id="statProcessing">0</div><div class="label">Processing</div></div>
             <div class="stat-card"><div class="value" id="statDelivered">0</div><div class="label">Delivered</div></div>
             <div class="stat-card"><div class="value" id="statFailed">0</div><div class="label">Failed</div></div>
         </div>
 
-        <!-- Tabs -->
         <div class="tabs">
             <button class="tab active" onclick="switchTab('orders', event)">📦 My Orders</button>
             <button class="tab" onclick="switchTab('neworder', event)">➕ New Order</button>
             <button class="tab" onclick="switchTab('tracking', event)">📡 Live Tracking</button>
         </div>
 
-        <!-- Orders Tab -->
         <div class="tab-content active" id="tab-orders">
             <div class="card">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-                    <h3>📋 Order History</h3>
-                    <button class="btn btn-primary btn-sm" onclick="loadOrders()">🔄 Refresh</button>
+                    <h3>📋 Order History <span class="live-badge" id="liveBadge" style="display:none;"><span class="dot"></span> LIVE</span></h3>
                 </div>
                 <table class="orders-table">
-                    <thead>
-                        <tr><th>Order ID</th><th>Recipient</th><th>Address</th><th>Status</th><th>Priority</th><th>Created</th></tr>
-                    </thead>
+                    <thead><tr><th>Order ID</th><th>Recipient</th><th>Address</th><th>Status</th><th>Priority</th><th>Created</th></tr></thead>
                     <tbody id="ordersBody">
                         <tr><td colspan="6" style="text-align:center;color:var(--text-light);">No orders yet. Submit your first order!</td></tr>
                     </tbody>
@@ -183,46 +179,18 @@
             </div>
         </div>
 
-        <!-- New Order Tab -->
         <div class="tab-content" id="tab-neworder">
             <div class="card">
                 <h3>📝 Submit New Delivery Order</h3>
                 <div class="form-grid">
-                    <div class="form-group">
-                        <label>Recipient Name</label>
-                        <input type="text" id="recipientName" placeholder="e.g. John Doe">
-                    </div>
-                    <div class="form-group">
-                        <label>Priority</label>
-                        <select id="priority">
-                            <option value="normal">Normal</option>
-                            <option value="express">Express</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Street Address</label>
-                        <input type="text" id="deliveryStreet" placeholder="e.g. 42 Galle Road">
-                    </div>
-                    <div class="form-group">
-                        <label>City</label>
-                        <input type="text" id="deliveryCity" placeholder="e.g. Colombo">
-                    </div>
-                    <div class="form-group">
-                        <label>Postal Code</label>
-                        <input type="text" id="deliveryPostal" placeholder="e.g. 00300">
-                    </div>
-                    <div class="form-group">
-                        <label>Item Description</label>
-                        <input type="text" id="itemDesc" placeholder="e.g. Electronics Package">
-                    </div>
-                    <div class="form-group">
-                        <label>Quantity</label>
-                        <input type="number" id="itemQty" value="1" min="1">
-                    </div>
-                    <div class="form-group">
-                        <label>Weight (kg)</label>
-                        <input type="number" id="itemWeight" value="1.0" step="0.1" min="0.1">
-                    </div>
+                    <div class="form-group"><label>Recipient Name</label><input type="text" id="recipientName" placeholder="e.g. John Doe"></div>
+                    <div class="form-group"><label>Priority</label><select id="priority"><option value="normal">Normal</option><option value="express">Express</option></select></div>
+                    <div class="form-group"><label>Street Address</label><input type="text" id="deliveryStreet" placeholder="e.g. 42 Galle Road"></div>
+                    <div class="form-group"><label>City</label><input type="text" id="deliveryCity" placeholder="e.g. Colombo"></div>
+                    <div class="form-group"><label>Postal Code</label><input type="text" id="deliveryPostal" placeholder="e.g. 00300"></div>
+                    <div class="form-group"><label>Item Description</label><input type="text" id="itemDesc" placeholder="e.g. Electronics Package"></div>
+                    <div class="form-group"><label>Quantity</label><input type="number" id="itemQty" value="1" min="1"></div>
+                    <div class="form-group"><label>Weight (kg)</label><input type="number" id="itemWeight" value="1.0" step="0.1" min="0.1"></div>
                     <div class="full" style="display:flex;gap:1rem;">
                         <button class="btn btn-primary" onclick="submitOrder(false)">📤 Submit Order</button>
                         <button class="btn" style="background:#f1f5f9;" onclick="submitOrder(true)">⚡ Submit Async (High Volume)</button>
@@ -231,15 +199,11 @@
             </div>
         </div>
 
-        <!-- Live Tracking Tab -->
         <div class="tab-content" id="tab-tracking">
             <div class="card">
-                <h3>📡 Real-Time Event Feed <span class="ws-status" id="wsStatus2"></span></h3>
+                <h3>📡 Real-Time Event Feed <span class="ws-status" id="wsStatus2"></span> <span class="live-badge" id="liveBadge2" style="display:none;"><span class="dot"></span> LIVE</span></h3>
                 <div class="live-feed" id="liveFeed">
-                    <div class="feed-item">
-                        <div class="time">Waiting for events...</div>
-                        <div>Connect to receive real-time order updates</div>
-                    </div>
+                    <div class="feed-item"><div class="time">Waiting for events...</div><div>Connect to receive real-time order updates</div></div>
                 </div>
             </div>
         </div>
@@ -247,57 +211,44 @@
 </div>
 
 <script>
-// ── State ─────────────────────────────────────────────
-let token = null;
-let userId = null;
-let userRole = null;
-let userName = null;
-let ws = null;
+let token = null, userId = null, userRole = null, userName = null;
+let ws = null, keepAliveTimer = null, reloadTimer = null;
+let currentOrders = {};  // order_id → order data cache
+const API = '';
 
-const API = '';  // Same origin
-
-// ── Toast Notifications ───────────────────────────────
 function showToast(message, type = 'info') {
-    const container = document.getElementById('toastContainer');
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `<strong>${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</strong> ${message}`;
-    container.appendChild(toast);
-    setTimeout(() => toast.remove(), 5000);
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<strong>${type==='success'?'✅':type==='error'?'❌':'ℹ️'}</strong> ${message}`;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 5000);
 }
 
-// ── Auth ──────────────────────────────────────────────
 async function login() {
     const username = document.getElementById('loginUsername').value;
     const password = document.getElementById('loginPassword').value;
     try {
         const resp = await fetch(`${API}/api/v1/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password }),
         });
         if (!resp.ok) throw new Error('Invalid credentials');
         const data = await resp.json();
-        token = data.access_token;
-        userId = data.user_id;
-        userRole = data.role;
-        userName = data.name;
-
+        token = data.access_token; userId = data.user_id; userRole = data.role; userName = data.name;
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('dashboard').classList.add('active');
         document.getElementById('userName').textContent = `${userName} (${userId})`;
-
         connectWebSocket();
         loadOrders();
         showToast(`Welcome, ${userName}!`, 'success');
-    } catch (err) {
-        showToast(err.message, 'error');
-    }
+    } catch (err) { showToast(err.message, 'error'); }
 }
 
 function logout() {
     token = null;
-    if (ws) ws.close();
+    if (ws) { ws.onclose = null; ws.close(); ws = null; }
+    if (keepAliveTimer) clearInterval(keepAliveTimer);
     document.getElementById('loginScreen').style.display = '';
     document.getElementById('dashboard').classList.remove('active');
 }
@@ -306,56 +257,69 @@ function authHeaders() {
     return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 }
 
-// ── Tabs ──────────────────────────────────────────────
 function switchTab(tab, evt) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    if (evt && evt.target) {
-        evt.target.classList.add('active');
-    } else {
-        // Programmatic call – highlight the matching tab button
-        document.querySelectorAll('.tab').forEach(t => {
-            if (t.textContent.toLowerCase().includes(tab)) t.classList.add('active');
-        });
-    }
+    if (evt && evt.target) evt.target.classList.add('active');
+    else document.querySelectorAll('.tab').forEach(t => { if (t.textContent.toLowerCase().includes(tab)) t.classList.add('active'); });
     document.getElementById(`tab-${tab}`).classList.add('active');
 }
 
-// ── Load Orders ───────────────────────────────────────
+// ── Stat counter with pulse animation ──
+function updateStat(id, val) {
+    const el = document.getElementById(id);
+    const old = parseInt(el.textContent) || 0;
+    if (old !== val) {
+        el.textContent = val;
+        el.classList.remove('pulse');
+        void el.offsetWidth;  // reflow
+        el.classList.add('pulse');
+    }
+}
+
+// ── Load orders & render with flash on changes ──
 async function loadOrders() {
     try {
         const resp = await fetch(`${API}/api/v1/orders/client/${userId}`, { headers: authHeaders() });
         const data = await resp.json();
         const orders = data.orders || [];
-        
-        // Update stats
-        document.getElementById('statTotal').textContent = orders.length;
-        document.getElementById('statProcessing').textContent = orders.filter(o => ['PROCESSING','IN_WAREHOUSE','IN_TRANSIT','ACCEPTED'].includes(o.status)).length;
-        document.getElementById('statDelivered').textContent = orders.filter(o => o.status === 'DELIVERED').length;
-        document.getElementById('statFailed').textContent = orders.filter(o => ['FAILED','CANCELLED'].includes(o.status)).length;
 
-        // Update table
+        // Track which rows changed status
+        const prev = { ...currentOrders };
+        currentOrders = {};
+        orders.forEach(o => { currentOrders[o.order_id] = o; });
+
+        updateStat('statTotal', orders.length);
+        updateStat('statProcessing', orders.filter(o => ['PROCESSING','IN_WAREHOUSE','IN_TRANSIT','ACCEPTED','LOADED'].includes(o.status)).length);
+        updateStat('statDelivered', orders.filter(o => o.status === 'DELIVERED').length);
+        updateStat('statFailed', orders.filter(o => ['FAILED','CANCELLED'].includes(o.status)).length);
+
         const tbody = document.getElementById('ordersBody');
-        if (orders.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-light);">No orders yet</td></tr>';
+        if (!orders.length) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-light);">No orders yet. Submit your first order!</td></tr>';
             return;
         }
-        tbody.innerHTML = orders.map(o => `
-            <tr>
-                <td><strong>${o.order_id || '-'}</strong></td>
+        tbody.innerHTML = orders.map(o => {
+            const changed = prev[o.order_id] && prev[o.order_id].status !== o.status;
+            const isNew = !prev[o.order_id];
+            return `<tr class="${changed || isNew ? 'flash-update' : ''}" data-oid="${o.order_id}">
+                <td><strong>${o.order_id}</strong></td>
                 <td>${o.recipient_name || '-'}</td>
                 <td>${o.delivery_address || '-'}</td>
                 <td><span class="status-badge status-${o.status}">${o.status}</span></td>
                 <td>${o.priority || '-'}</td>
                 <td>${o.created_at ? new Date(o.created_at).toLocaleString() : '-'}</td>
-            </tr>
-        `).join('');
-    } catch (err) {
-        showToast('Failed to load orders: ' + err.message, 'error');
-    }
+            </tr>`;
+        }).join('');
+    } catch (err) { showToast('Failed to load orders: ' + err.message, 'error'); }
 }
 
-// ── Submit Order ──────────────────────────────────────
+// Debounce: coalesce rapid WS events into one API reload
+function debouncedReload() {
+    if (reloadTimer) clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(() => loadOrders(), 300);
+}
+
 async function submitOrder(async_mode) {
     const order = {
         client_id: userId,
@@ -363,94 +327,91 @@ async function submitOrder(async_mode) {
         delivery_street: document.getElementById('deliveryStreet').value,
         delivery_city: document.getElementById('deliveryCity').value,
         delivery_postal_code: document.getElementById('deliveryPostal').value,
-        items: [{
-            description: document.getElementById('itemDesc').value || 'Package',
-            quantity: parseInt(document.getElementById('itemQty').value) || 1,
-            weight_kg: parseFloat(document.getElementById('itemWeight').value) || 1.0,
-        }],
+        items: [{ description: document.getElementById('itemDesc').value || 'Package',
+                   quantity: parseInt(document.getElementById('itemQty').value) || 1,
+                   weight_kg: parseFloat(document.getElementById('itemWeight').value) || 1.0 }],
         priority: document.getElementById('priority').value,
     };
-
     if (!order.recipient_name || !order.delivery_street || !order.delivery_city) {
-        showToast('Please fill in all required fields', 'error');
-        return;
+        showToast('Please fill in all required fields', 'error'); return;
     }
-
     const endpoint = async_mode ? '/api/v1/orders/async' : '/api/v1/orders';
     try {
-        const resp = await fetch(`${API}${endpoint}`, {
-            method: 'POST',
-            headers: authHeaders(),
-            body: JSON.stringify(order),
-        });
+        const resp = await fetch(`${API}${endpoint}`, { method: 'POST', headers: authHeaders(), body: JSON.stringify(order) });
         const data = await resp.json();
         if (data.status === 'COMPLETED' || data.status === 'QUEUED') {
             showToast(`Order ${data.order_id || data.saga_id} ${data.status.toLowerCase()}!`, 'success');
             switchTab('orders');
-            setTimeout(loadOrders, 500);
+            setTimeout(loadOrders, 300);
         } else {
-            showToast(`Order failed: ${data.message}`, 'error');
+            showToast(`Order failed: ${data.message || 'Unknown error'}`, 'error');
         }
-    } catch (err) {
-        showToast('Failed to submit order: ' + err.message, 'error');
-    }
+    } catch (err) { showToast('Failed to submit order: ' + err.message, 'error'); }
 }
 
-// ── WebSocket Real-Time Tracking ──────────────────────
+// ── WebSocket ──
 function connectWebSocket() {
-    const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${location.host}/ws/tracking?token=${token}`;
-    
-    ws = new WebSocket(wsUrl);
-    
+    if (ws && ws.readyState === WebSocket.OPEN) return;
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(`${proto}//${location.host}/ws/tracking?token=${token}`);
+
     ws.onopen = () => {
-        document.getElementById('wsStatus').className = 'ws-status connected';
-        document.getElementById('wsStatus2').className = 'ws-status connected';
+        setWsStatus(true);
         console.log('[WS] Connected');
     };
-    
     ws.onclose = () => {
-        document.getElementById('wsStatus').className = 'ws-status disconnected';
-        document.getElementById('wsStatus2').className = 'ws-status disconnected';
+        setWsStatus(false);
         console.log('[WS] Disconnected. Reconnecting in 3s...');
-        setTimeout(connectWebSocket, 3000);
+        if (token) setTimeout(connectWebSocket, 3000);
     };
-    
-    ws.onmessage = (event) => {
+    ws.onmessage = (e) => {
         try {
-            const data = JSON.parse(event.data);
+            const data = JSON.parse(e.data);
+            if (data.event_type === 'connected') return;
+
             addFeedItem(data);
 
-            // Refresh orders when status changes
-            if (data.event_type && data.event_type.includes('status_change')) {
-                loadOrders();
-            }
+            // ── ANY event triggers debounced order table reload ──
+            if (data.event_type) debouncedReload();
 
-            // Show toast for important events
-            if (data.status === 'DELIVERED') {
-                showToast(`📦 Order ${data.order_id} delivered!`, 'success');
-            } else if (data.status === 'FAILED') {
-                showToast(`⚠️ Order ${data.order_id} delivery failed`, 'error');
-            }
-        } catch (e) {}
+            // ── Status-specific toasts ──
+            const s = data.status;
+            const oid = data.order_id || '';
+            if (s === 'DELIVERED')      showToast(`📦 Order ${oid} delivered!`, 'success');
+            else if (s === 'FAILED')    showToast(`⚠️ Order ${oid} delivery failed`, 'error');
+            else if (s === 'ACCEPTED')  showToast(`✅ Order ${oid} accepted`, 'success');
+            else if (s === 'IN_WAREHOUSE') showToast(`🏭 Order ${oid} in warehouse`, 'info');
+            else if (s === 'PROCESSING')   showToast(`🔄 Order ${oid} route optimised`, 'info');
+        } catch (_) {}
     };
-    
-    // Keep alive
-    setInterval(() => { if (ws && ws.readyState === WebSocket.OPEN) ws.send('ping'); }, 30000);
+
+    if (keepAliveTimer) clearInterval(keepAliveTimer);
+    keepAliveTimer = setInterval(() => { if (ws?.readyState === WebSocket.OPEN) ws.send('ping'); }, 25000);
+}
+
+function setWsStatus(connected) {
+    const cls = connected ? 'ws-status connected' : 'ws-status disconnected';
+    document.getElementById('wsStatus').className = cls;
+    document.getElementById('wsStatus2').className = cls;
+    document.getElementById('liveBadge').style.display = connected ? 'inline-flex' : 'none';
+    document.getElementById('liveBadge2').style.display = connected ? 'inline-flex' : 'none';
 }
 
 function addFeedItem(data) {
     const feed = document.getElementById('liveFeed');
+    // Clear placeholder
+    if (feed.children.length === 1 && feed.firstElementChild?.querySelector('.time')?.textContent === 'Waiting for events...') feed.innerHTML = '';
     const item = document.createElement('div');
-    item.className = 'feed-item';
+    let ec = '';
+    if (data.status === 'DELIVERED') ec = 'delivered';
+    else if (data.status === 'FAILED' || data.status === 'CANCELLED') ec = 'failed';
+    else if (data.status === 'IN_WAREHOUSE') ec = 'warehouse';
+    item.className = `feed-item ${ec}`;
     const time = new Date().toLocaleTimeString();
-    item.innerHTML = `
-        <div class="time">${time}</div>
+    item.innerHTML = `<div class="time">${time}</div>
         <div><strong>${data.event_type || 'event'}</strong>: ${data.message || JSON.stringify(data)}</div>
-        ${data.order_id ? `<div style="font-size:.8rem;color:var(--text-light);">Order: ${data.order_id} | Status: <span class="status-badge status-${data.status}">${data.status || '-'}</span></div>` : ''}
-    `;
+        ${data.order_id ? `<div style="font-size:.8rem;color:var(--text-light);">Order: ${data.order_id} | Status: <span class="status-badge status-${data.status}">${data.status||'-'}</span></div>` : ''}`;
     feed.insertBefore(item, feed.firstChild);
-    // Keep max 50 items
     while (feed.children.length > 50) feed.removeChild(feed.lastChild);
 }
 </script>

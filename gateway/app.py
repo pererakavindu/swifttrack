@@ -158,10 +158,9 @@ async def redis_subscriber():
             if message["type"] == "message":
                 try:
                     data = json.loads(message["data"])
-                    # Broadcast to all connected WebSocket clients
-                    await manager.broadcast(data)
+                    sent_to: set[str] = set()
 
-                    # Also send targeted messages to specific clients
+                    # 1. Send to the specific client who owns the order
                     order_id = data.get("order_id")
                     if order_id and redis_client:
                         order_data = await redis_client.hgetall(f"order:{order_id}")
@@ -169,6 +168,20 @@ async def redis_subscriber():
                             client_id = order_data.get("client_id")
                             if client_id:
                                 await manager.send_to_user(client_id, data)
+                                sent_to.add(client_id)
+
+                    # 2. Send to all connected drivers (they need all package/route events)
+                    for uid in list(manager.active_connections.keys()):
+                        if uid.startswith("DRV-") and uid not in sent_to:
+                            await manager.send_to_user(uid, data)
+                            sent_to.add(uid)
+
+                    # 3. Send to admins
+                    for uid in list(manager.active_connections.keys()):
+                        if uid.startswith("ADM-") and uid not in sent_to:
+                            await manager.send_to_user(uid, data)
+                            sent_to.add(uid)
+
                 except json.JSONDecodeError:
                     pass
     except asyncio.CancelledError:
@@ -409,26 +422,54 @@ async def get_route(route_id: str, user=Depends(get_current_user)):
 
 @app.get("/api/v1/driver/manifest")
 async def get_driver_manifest(user=Depends(get_current_user)):
-    """Get the driver's delivery manifest for today."""
+    """Get the driver's delivery manifest for today — flat stops list."""
     if user["role"] not in ("driver", "admin"):
         raise HTTPException(403, "Drivers only")
 
-    # Fetch routes from ROS and filter by driver
+    driver_id = user["sub"]
+    stops = []
+
     try:
-        resp = await http_client.get(f"{ROS_URL}/api/v1/routes")
-        all_routes = resp.json().get("routes", [])
-        driver_routes = [r for r in all_routes if r.get("driver_id") == user["sub"]]
+        # Strategy 1: Get stops from ROS routes assigned to this driver
+        try:
+            resp = await http_client.get(f"{ROS_URL}/api/v1/routes")
+            all_routes = resp.json().get("routes", [])
+            driver_routes = [r for r in all_routes if r.get("driver_id") == driver_id]
+            seen_orders = set()
+            for route in driver_routes:
+                for stop in route.get("stops", []):
+                    oid = stop.get("order_id", "")
+                    if oid in seen_orders:
+                        continue
+                    seen_orders.add(oid)
+                    order_data = await redis_client.hgetall(f"order:{oid}")
+                    if order_data:
+                        stop["recipient_name"] = order_data.get("recipient_name", "")
+                        stop["delivery_address"] = order_data.get("delivery_address", "")
+                        stop["status"] = order_data.get("status", "PROCESSING")
+                        stop["client_id"] = order_data.get("client_id", "")
+                    stops.append(stop)
+        except Exception:
+            logger.warning("Could not fetch ROS routes, falling back to Redis")
 
-        # Enrich with order details from Redis
-        for route in driver_routes:
-            for stop in route.get("stops", []):
-                order_data = await redis_client.hgetall(f"order:{stop['order_id']}")
-                if order_data:
-                    stop["recipient_name"] = order_data.get("recipient_name", "")
-                    stop["delivery_address"] = order_data.get("delivery_address", "")
-                    stop["status"] = order_data.get("status", "")
+        # Strategy 2: Also fetch from Redis driver:xxx:orders set
+        redis_oids = await redis_client.smembers(f"driver:{driver_id}:orders")
+        existing = {s.get("order_id") for s in stops}
+        for oid in redis_oids:
+            if oid in existing:
+                continue
+            order_data = await redis_client.hgetall(f"order:{oid}")
+            if order_data:
+                stops.append({
+                    "order_id": oid,
+                    "recipient_name": order_data.get("recipient_name", ""),
+                    "delivery_address": order_data.get("delivery_address", ""),
+                    "status": order_data.get("status", "PROCESSING"),
+                    "client_id": order_data.get("client_id", ""),
+                    "priority": order_data.get("priority", "normal"),
+                })
 
-        return {"driver_id": user["sub"], "routes": driver_routes}
+        return {"driver_id": driver_id, "stops": stops, "count": len(stops)}
     except Exception as exc:
         logger.error(f"Error fetching driver manifest: {exc}")
         raise HTTPException(502, "Failed to fetch delivery manifest")
