@@ -142,6 +142,8 @@ class DeliveryUpdateRequest(BaseModel):
     driver_id: str
     result: str  # DELIVERED, FAILED_NOT_HOME, etc.
     notes: str | None = None
+    signature_data: str | None = None   # base64 PNG of customer signature
+    photo_data: str | None = None       # base64 JPEG of delivery photo
 
 
 # ── Saga Execution ─────────────────────────────────────
@@ -295,48 +297,118 @@ async def execute_order_saga(saga_id: str, req: SubmitOrderRequest) -> dict:
     # ── Step 3: Optimise Route via ROS ─────────────────
     try:
         logger.info(f"[Saga {saga_id}] Step 3: Optimising route via ROS...")
-        resp = await http_client.post(
-            f"{ROS_URL}/api/v1/optimize",
-            json={
-                "delivery_points": [
-                    {
-                        "order_id": saga["cms_order_id"],
-                        "street": req.delivery_street,
-                        "city": req.delivery_city,
-                        "postal_code": req.delivery_postal_code,
-                        "priority": req.priority,
-                    }
-                ],
-                "vehicles": [
-                    {
-                        "vehicle_id": "VEH-001",
-                        "driver_id": "DRV-001",
-                        "capacity_kg": 500.0,
-                    }
-                ],
-            },
-            timeout=15,
-        )
-        resp.raise_for_status()
-        ros_result = resp.json()
-        route_id = ros_result["routes"][0]["route_id"] if ros_result.get("routes") else None
-        saga["ros_route_id"] = route_id
-        saga["state"] = SagaState.COMPLETED
-        await save_saga(saga_id, saga)
-        logger.info(f"[Saga {saga_id}] Route optimised: {route_id}")
 
-        # Update Redis status
-        await redis_client.hset(f"order:{saga['cms_order_id']}", "status", "PROCESSING")
-        await redis_client.hset(f"order:{saga['cms_order_id']}", "route_id", saga["ros_route_id"] or "")
+        # Check if the assigned driver already has active routes
+        driver_id = "DRV-001"
+        existing_route_id = None
+        try:
+            resp = await http_client.get(f"{ROS_URL}/api/v1/routes/driver/{driver_id}", timeout=5)
+            if resp.status_code == 200:
+                driver_routes = resp.json().get("routes", [])
+                # Find an active route with existing stops
+                for r in driver_routes:
+                    if r.get("stops"):
+                        existing_route_id = r.get("route_id")
+                        break
+        except Exception:
+            pass  # Fallback to creating a new route
 
-        await publish_tracking({
-            "event_type": "order.status_change",
-            "order_id": saga["cms_order_id"],
-            "client_id": req.client_id,
-            "status": "PROCESSING",
-            "message": f"Route optimised. Route ID: {route_id}",
-            "timestamp": datetime.utcnow().isoformat(),
-        })
+        if existing_route_id:
+            # ── Route CHANGE: Add stop to existing route ──
+            logger.info(f"[Saga {saga_id}] Driver {driver_id} has active route {existing_route_id}, adding stop...")
+            resp = await http_client.post(
+                f"{ROS_URL}/api/v1/routes/{existing_route_id}/add-stop",
+                json={
+                    "order_id": saga["cms_order_id"],
+                    "street": req.delivery_street,
+                    "city": req.delivery_city,
+                    "postal_code": req.delivery_postal_code,
+                    "priority": req.priority,
+                },
+                timeout=15,
+            )
+            resp.raise_for_status()
+            change_result = resp.json()
+            route_id = existing_route_id
+            saga["ros_route_id"] = route_id
+            saga["state"] = SagaState.COMPLETED
+            await save_saga(saga_id, saga)
+            logger.info(f"[Saga {saga_id}] Stop added to route {route_id} (route change)")
+
+            # Update Redis status
+            await redis_client.hset(f"order:{saga['cms_order_id']}", "status", "PROCESSING")
+            await redis_client.hset(f"order:{saga['cms_order_id']}", "route_id", route_id)
+
+            # ── Publish ROUTE CHANGE event to drivers via Redis Pub/Sub ──
+            new_stop = change_result.get("new_stop", {})
+            await publish_tracking({
+                "event_type": "route.change",
+                "change_type": "STOP_ADDED",
+                "driver_id": driver_id,
+                "route_id": route_id,
+                "order_id": saga["cms_order_id"],
+                "client_id": req.client_id,
+                "priority": req.priority,
+                "new_stop": new_stop,
+                "total_stops": len(change_result.get("updated_stops", [])),
+                "message": f"🚨 New {'HIGH-PRIORITY ' if req.priority == 'high' else ''}delivery added to your route: {req.delivery_street}, {req.delivery_city}",
+                "timestamp": datetime.utcnow().isoformat(),
+            })
+
+            # Also publish a normal status change for the client
+            await publish_tracking({
+                "event_type": "order.status_change",
+                "order_id": saga["cms_order_id"],
+                "client_id": req.client_id,
+                "status": "PROCESSING",
+                "message": f"Route optimised. Added to existing route {route_id}",
+                "timestamp": datetime.utcnow().isoformat(),
+            })
+
+        else:
+            # ── NEW route: No existing routes for this driver ──
+            resp = await http_client.post(
+                f"{ROS_URL}/api/v1/optimize",
+                json={
+                    "delivery_points": [
+                        {
+                            "order_id": saga["cms_order_id"],
+                            "street": req.delivery_street,
+                            "city": req.delivery_city,
+                            "postal_code": req.delivery_postal_code,
+                            "priority": req.priority,
+                        }
+                    ],
+                    "vehicles": [
+                        {
+                            "vehicle_id": "VEH-001",
+                            "driver_id": driver_id,
+                            "capacity_kg": 500.0,
+                        }
+                    ],
+                },
+                timeout=15,
+            )
+            resp.raise_for_status()
+            ros_result = resp.json()
+            route_id = ros_result["routes"][0]["route_id"] if ros_result.get("routes") else None
+            saga["ros_route_id"] = route_id
+            saga["state"] = SagaState.COMPLETED
+            await save_saga(saga_id, saga)
+            logger.info(f"[Saga {saga_id}] Route optimised: {route_id}")
+
+            # Update Redis status
+            await redis_client.hset(f"order:{saga['cms_order_id']}", "status", "PROCESSING")
+            await redis_client.hset(f"order:{saga['cms_order_id']}", "route_id", saga["ros_route_id"] or "")
+
+            await publish_tracking({
+                "event_type": "order.status_change",
+                "order_id": saga["cms_order_id"],
+                "client_id": req.client_id,
+                "status": "PROCESSING",
+                "message": f"Route optimised. Route ID: {route_id}",
+                "timestamp": datetime.utcnow().isoformat(),
+            })
 
     except Exception as exc:
         logger.error(f"[Saga {saga_id}] ROS failed: {exc}. Compensating WMS + CMS...")
@@ -360,8 +432,7 @@ async def execute_order_saga(saga_id: str, req: SubmitOrderRequest) -> dict:
         "timestamp": datetime.utcnow().isoformat(),
     })
 
-    # Assign driver and update final details in Redis
-    driver_id = "DRV-001"  # Assigned by ROS optimizer
+    # Assign driver and update final details in Redis (driver_id already set above)
     await redis_client.hset(f"order:{saga['cms_order_id']}", "driver_id", driver_id)
 
     # Add to driver's order list
@@ -577,7 +648,19 @@ async def update_delivery(req: DeliveryUpdateRequest):
         raise HTTPException(404, f"Order {req.order_id} not found")
 
     new_status = "DELIVERED" if req.result.upper() == "DELIVERED" else "FAILED"
-    await redis_client.hset(f"order:{req.order_id}", "status", new_status)
+    update_fields = {"status": new_status}
+    if req.notes:
+        update_fields["delivery_notes"] = req.notes
+    if req.signature_data:
+        update_fields["has_signature"] = "true"
+        await redis_client.set(f"pod:sig:{req.order_id}", req.signature_data, ex=604800)  # 7 days
+    if req.photo_data:
+        update_fields["has_photo"] = "true"
+        await redis_client.set(f"pod:photo:{req.order_id}", req.photo_data, ex=604800)
+    update_fields["delivered_at"] = datetime.utcnow().isoformat()
+    update_fields["delivered_by"] = req.driver_id
+    for k, v in update_fields.items():
+        await redis_client.hset(f"order:{req.order_id}", k, v)
 
     # Publish real-time update
     await publish_tracking({

@@ -76,11 +76,81 @@
         .toast { background: var(--card); padding: .8rem 1rem; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,.15); margin-bottom: .4rem; animation: slideIn .3s; border-left: 4px solid var(--primary); font-size: .85rem; }
         .toast.success { border-left-color: var(--primary); }
         .toast.error { border-left-color: var(--danger); }
+
+        /* ── Route Change Alert Banner ── */
+        .route-change-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:200; justify-content:center; align-items:center; }
+        .route-change-overlay.show { display:flex; }
+        .route-change-alert { background: linear-gradient(135deg, #fef3c7 0%, #fffbeb 100%); border: 3px solid #f59e0b; border-radius: 16px; padding: 1.5rem; width: 90%; max-width: 400px; text-align: center; animation: routeAlertBounce .5s ease; box-shadow: 0 8px 30px rgba(245,158,11,.3); }
+        .route-change-alert.high-priority { background: linear-gradient(135deg, #fee2e2 0%, #fff1f2 100%); border-color: #dc2626; box-shadow: 0 8px 30px rgba(220,38,38,.3); }
+        @keyframes routeAlertBounce { 0% { transform:scale(0.8); opacity:0; } 50% { transform:scale(1.05); } 100% { transform:scale(1); opacity:1; } }
+        .route-change-alert .alert-icon { font-size: 2.5rem; margin-bottom: .5rem; }
+        .route-change-alert .alert-title { font-size: 1.1rem; font-weight: 700; color: #92400e; margin-bottom: .4rem; }
+        .route-change-alert.high-priority .alert-title { color: #dc2626; }
+        .route-change-alert .alert-msg { font-size: .88rem; color: #78350f; margin-bottom: .8rem; line-height: 1.4; }
+        .route-change-alert.high-priority .alert-msg { color: #991b1b; }
+        .route-change-alert .alert-detail { background: white; border-radius: 8px; padding: .6rem; font-size: .82rem; margin-bottom: .8rem; text-align: left; }
+        .route-change-alert .alert-detail .label { font-size: .72rem; color: var(--text-light); text-transform: uppercase; letter-spacing: .5px; }
+        .route-change-alert .dismiss-btn { background: #f59e0b; color: white; border: none; padding: .6rem 2rem; border-radius: 8px; font-size: .9rem; font-weight: 600; cursor: pointer; }
+        .route-change-alert.high-priority .dismiss-btn { background: #dc2626; }
+
+        .stop-card.new-stop { border-left: 4px solid #f59e0b; background: #fffbeb; animation: newStopGlow 2s ease-out; }
+        .stop-card.new-stop.high-priority-stop { border-left-color: #dc2626; background: #fff1f2; }
+        @keyframes newStopGlow { 0% { box-shadow: 0 0 15px rgba(245,158,11,.5); } 100% { box-shadow: none; } }
+
+        .priority-badge { background: #dc2626; color: white; font-size: .65rem; padding: .1rem .4rem; border-radius: 4px; font-weight: 700; text-transform: uppercase; margin-left: .4rem; animation: priorityPulse 1.5s infinite; }
+        @keyframes priorityPulse { 0%,100% { opacity:1; } 50% { opacity:.6; } }
+
+        /* ── Proof of Delivery Modal ── */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:50; justify-content:center; align-items:flex-end; }
+        .modal-overlay.open { display:flex; }
+        .modal { background:var(--card); width:100%; max-width:480px; border-radius:16px 16px 0 0; padding:1.5rem; max-height:90vh; overflow-y:auto; animation:modalSlide .3s ease; }
+        @keyframes modalSlide { from { transform:translateY(100%); } to { transform:translateY(0); } }
+        .modal h3 { font-size:1rem; margin-bottom:1rem; display:flex; align-items:center; gap:.4rem; }
+        .modal .close-btn { margin-left:auto; background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--text-light); }
+
+        .pod-tabs { display:flex; gap:.4rem; margin-bottom:1rem; }
+        .pod-tab { flex:1; padding:.5rem; border:2px solid var(--border); border-radius:8px; background:var(--bg); cursor:pointer; text-align:center; font-size:.8rem; font-weight:600; transition:.2s; }
+        .pod-tab.active { border-color:var(--primary); background:#ecfdf5; color:var(--primary); }
+        .pod-tab-content { display:none; }
+        .pod-tab-content.active { display:block; }
+
+        .sig-canvas { width:100%; height:180px; border:2px dashed var(--border); border-radius:8px; background:#fafffe; cursor:crosshair; touch-action:none; }
+        .sig-canvas.has-sig { border-color:var(--primary); border-style:solid; }
+        .sig-actions { display:flex; gap:.5rem; margin-top:.5rem; }
+
+        .photo-area { text-align:center; }
+        .photo-preview { width:100%; max-height:200px; object-fit:cover; border-radius:8px; border:1px solid var(--border); display:none; margin-bottom:.5rem; }
+        .camera-btns { display:flex; gap:.5rem; justify-content:center; }
+        .camera-btns .btn { font-size:.82rem; }
+        #cameraInput { display:none; }
+
+        .pod-notes { width:100%; padding:.6rem; border:1px solid var(--border); border-radius:6px; font-size:.85rem; min-height:60px; resize:vertical; margin-top:.8rem; font-family:inherit; }
+        .pod-notes:focus { outline:none; border-color:var(--primary); }
+
+        .pod-submit-area { display:flex; gap:.5rem; margin-top:1rem; }
+        .pod-submit-area .btn { flex:1; padding:.7rem; font-size:.9rem; }
+        .proof-indicator { font-size:.7rem; color:var(--text-light); margin-top:.5rem; display:flex; gap:.8rem; flex-wrap:wrap; }
+        .proof-indicator span { display:flex; align-items:center; gap:.2rem; }
+        .proof-indicator .check { color:var(--primary); font-weight:bold; }
     </style>
 </head>
 <body>
 
 <div class="toast-container" id="toastContainer"></div>
+
+<!-- Route Change Alert Overlay -->
+<div class="route-change-overlay" id="routeChangeOverlay">
+    <div class="route-change-alert" id="routeChangeAlert">
+        <div class="alert-icon" id="rcIcon">🔀</div>
+        <div class="alert-title" id="rcTitle">Route Updated</div>
+        <div class="alert-msg" id="rcMessage">Your route has been updated with a new delivery stop.</div>
+        <div class="alert-detail" id="rcDetail">
+            <div class="label">New Stop</div>
+            <div id="rcAddress">Loading...</div>
+        </div>
+        <button class="dismiss-btn" onclick="dismissRouteChange()">👍 Got it — View Updated Route</button>
+    </div>
+</div>
 
 <!-- Login -->
 <div id="loginScreen">
@@ -129,11 +199,66 @@
     </div>
 </div>
 
+<!-- Proof of Delivery Modal -->
+<div class="modal-overlay" id="podModal">
+    <div class="modal">
+        <h3>
+            <span id="podTitle">📋 Proof of Delivery</span>
+            <button class="close-btn" onclick="closePodModal()">&times;</button>
+        </h3>
+        <div style="font-size:.85rem;color:var(--text-light);margin-bottom:1rem;">
+            Order: <strong id="podOrderId"></strong>
+        </div>
+
+        <div class="pod-tabs">
+            <div class="pod-tab active" onclick="switchPodTab('signature', event)">✍️ Signature</div>
+            <div class="pod-tab" onclick="switchPodTab('photo', event)">📸 Photo</div>
+        </div>
+
+        <div class="pod-tab-content active" id="podTab-signature">
+            <p style="font-size:.78rem;color:var(--text-light);margin-bottom:.4rem;">Customer signs below:</p>
+            <canvas class="sig-canvas" id="sigCanvas" width="400" height="180"></canvas>
+            <div class="sig-actions">
+                <button class="btn btn-sm" style="background:#f1f5f9;" onclick="clearSignature()">🗑️ Clear</button>
+                <span id="sigStatus" style="font-size:.75rem;color:var(--text-light);margin-left:auto;line-height:2;">No signature</span>
+            </div>
+        </div>
+
+        <div class="pod-tab-content" id="podTab-photo">
+            <div class="photo-area">
+                <img id="photoPreview" class="photo-preview">
+                <div class="camera-btns">
+                    <button class="btn btn-primary btn-sm" onclick="document.getElementById('cameraInput').click()">📷 Take Photo</button>
+                    <button class="btn btn-sm" style="background:#f1f5f9;" onclick="clearPhoto()">🗑️ Remove</button>
+                </div>
+                <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handlePhoto(event)">
+            </div>
+        </div>
+
+        <textarea class="pod-notes" id="podNotes" placeholder="Delivery notes (optional)... e.g. Left at front door"></textarea>
+
+        <div class="proof-indicator" id="proofIndicator">
+            <span id="indSig">✍️ No signature</span>
+            <span id="indPhoto">📷 No photo</span>
+        </div>
+
+        <div class="pod-submit-area">
+            <button class="btn btn-primary" id="podConfirmBtn" onclick="submitDeliveryWithProof()">✅ Confirm Delivery</button>
+            <button class="btn" style="background:#f1f5f9;" onclick="closePodModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <script>
 let token = null, userId = null, driverName = '';
 let ws = null, keepAliveTimer = null, reloadTimer = null;
-let currentManifest = {};  // order_id → stop data cache
+let currentManifest = {};
 const API = '';
+
+// ── POD state ──
+let podOrderId = null, podResult = null;
+let sigCanvas, sigCtx, isDrawing = false, hasSig = false;
+let photoBase64 = null;
 
 function showToast(msg, type='info') {
     const c = document.getElementById('toastContainer');
@@ -158,6 +283,7 @@ async function login() {
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('dashboard').classList.add('active');
         document.getElementById('driverName').textContent = driverName;
+        initSignaturePad();
         connectWebSocket();
         loadManifest();
         showToast(`Welcome, ${driverName}!`, 'success');
@@ -174,7 +300,6 @@ function logout() {
 
 function authHeaders() { return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }; }
 
-// ── Summary pulse animation ──
 function updateSum(id, val) {
     const el = document.getElementById(id);
     const old = parseInt(el.textContent) || 0;
@@ -186,7 +311,6 @@ function updateSum(id, val) {
     }
 }
 
-// ── Load manifest from API + flash changed stops ──
 async function loadManifest() {
     try {
         const r = await fetch(`${API}/api/v1/driver/manifest`, { headers: authHeaders() });
@@ -206,52 +330,222 @@ async function loadManifest() {
 
         el.innerHTML = stops.map((s, i) => {
             const changed = prev[s.order_id] && prev[s.order_id].status !== s.status;
+            const isNewStop = recentRouteChanges.has(s.order_id);
             const cls = s.status === 'DELIVERED' ? 'delivered' : s.status === 'FAILED' ? 'failed' : '';
             const flash = changed ? 'flash' : '';
-            return `<div class="stop-card ${cls} ${flash}" data-oid="${s.order_id}">
-                <div class="oid">Stop ${i+1}: ${s.order_id}</div>
+            const newStopCls = isNewStop ? `new-stop ${s.priority === 'high' ? 'high-priority-stop' : ''}` : '';
+            const hasPod = s.has_signature === 'true' || s.has_photo === 'true';
+            return `<div class="stop-card ${cls} ${flash} ${newStopCls}" data-oid="${s.order_id}">
+                <div class="oid">Stop ${i+1}: ${s.order_id}${isNewStop ? ' <span style="font-size:.7rem;color:#f59e0b;font-weight:700;">🆕 NEW</span>' : ''}${s.priority === 'high' ? ' <span class="priority-badge">HIGH</span>' : ''}</div>
                 <div class="addr">📍 ${s.delivery_address || 'Address pending'}</div>
+                ${s.recipient_name ? `<div style="font-size:.78rem;color:var(--text-light);">👤 ${s.recipient_name}</div>` : ''}
                 <div class="bottom">
                     <span class="status-badge status-${s.status}">${s.status}</span>
-                    ${s.status !== 'DELIVERED' && s.status !== 'FAILED' ? `
+                    ${s.status === 'DELIVERED' || s.status === 'FAILED' ? `
+                        ${hasPod ? '<span style="font-size:.7rem;color:var(--primary);">📋 POD attached</span>' : ''}
+                    ` : `
                         <div>
-                            <button class="btn btn-primary btn-sm" onclick="confirmDelivery('${s.order_id}','DELIVERED')">✅ Delivered</button>
-                            <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;" onclick="confirmDelivery('${s.order_id}','FAILED')">❌ Failed</button>
-                        </div>` : ''}
+                            <button class="btn btn-primary btn-sm" onclick="openPodModal('${s.order_id}','DELIVERED')">✅ Delivered</button>
+                            <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;" onclick="openPodModal('${s.order_id}','FAILED')">❌ Failed</button>
+                        </div>
+                    `}
                 </div>
             </div>`;
         }).join('');
     } catch (e) { showToast('Failed to load manifest', 'error'); }
 }
 
-// Debounce rapid WS events into single reload
 function debouncedReload() {
     if (reloadTimer) clearTimeout(reloadTimer);
     reloadTimer = setTimeout(() => loadManifest(), 300);
 }
 
-async function confirmDelivery(oid, result) {
+// ══════════════════════════════════════════════════════
+// ── Signature Pad ────────────────────────────────────
+// ══════════════════════════════════════════════════════
+function initSignaturePad() {
+    sigCanvas = document.getElementById('sigCanvas');
+    sigCtx = sigCanvas.getContext('2d');
+
+    function getPos(e) {
+        const rect = sigCanvas.getBoundingClientRect();
+        const scaleX = sigCanvas.width / rect.width;
+        const scaleY = sigCanvas.height / rect.height;
+        if (e.touches) {
+            return { x: (e.touches[0].clientX - rect.left) * scaleX, y: (e.touches[0].clientY - rect.top) * scaleY };
+        }
+        return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+    }
+
+    function startDraw(e) {
+        e.preventDefault();
+        isDrawing = true;
+        const p = getPos(e);
+        sigCtx.beginPath();
+        sigCtx.moveTo(p.x, p.y);
+    }
+    function draw(e) {
+        if (!isDrawing) return;
+        e.preventDefault();
+        const p = getPos(e);
+        sigCtx.lineWidth = 2.5;
+        sigCtx.lineCap = 'round';
+        sigCtx.lineJoin = 'round';
+        sigCtx.strokeStyle = '#1e293b';
+        sigCtx.lineTo(p.x, p.y);
+        sigCtx.stroke();
+        hasSig = true;
+        updateProofIndicators();
+    }
+    function stopDraw() { isDrawing = false; }
+
+    sigCanvas.addEventListener('mousedown', startDraw);
+    sigCanvas.addEventListener('mousemove', draw);
+    sigCanvas.addEventListener('mouseup', stopDraw);
+    sigCanvas.addEventListener('mouseleave', stopDraw);
+    sigCanvas.addEventListener('touchstart', startDraw, { passive: false });
+    sigCanvas.addEventListener('touchmove', draw, { passive: false });
+    sigCanvas.addEventListener('touchend', stopDraw);
+}
+
+function clearSignature() {
+    sigCtx.clearRect(0, 0, sigCanvas.width, sigCanvas.height);
+    hasSig = false;
+    sigCanvas.classList.remove('has-sig');
+    updateProofIndicators();
+}
+
+function getSignatureBase64() {
+    if (!hasSig) return null;
+    sigCanvas.classList.add('has-sig');
+    return sigCanvas.toDataURL('image/png');
+}
+
+// ══════════════════════════════════════════════════════
+// ── Photo Capture ────────────────────────────────────
+// ══════════════════════════════════════════════════════
+function handlePhoto(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        // Resize to max 800px to keep payload reasonable
+        const img = new Image();
+        img.onload = () => {
+            const maxW = 800;
+            let w = img.width, h = img.height;
+            if (w > maxW) { h = h * maxW / w; w = maxW; }
+            const c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            c.getContext('2d').drawImage(img, 0, 0, w, h);
+            photoBase64 = c.toDataURL('image/jpeg', 0.7);
+            document.getElementById('photoPreview').src = photoBase64;
+            document.getElementById('photoPreview').style.display = 'block';
+            updateProofIndicators();
+        };
+        img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearPhoto() {
+    photoBase64 = null;
+    document.getElementById('photoPreview').style.display = 'none';
+    document.getElementById('photoPreview').src = '';
+    document.getElementById('cameraInput').value = '';
+    updateProofIndicators();
+}
+
+// ══════════════════════════════════════════════════════
+// ── POD Modal ────────────────────────────────────────
+// ══════════════════════════════════════════════════════
+function switchPodTab(tab, evt) {
+    document.querySelectorAll('.pod-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.pod-tab-content').forEach(t => t.classList.remove('active'));
+    if (evt && evt.target) evt.target.classList.add('active');
+    document.getElementById(`podTab-${tab}`).classList.add('active');
+}
+
+function openPodModal(oid, result) {
+    podOrderId = oid;
+    podResult = result;
+    document.getElementById('podOrderId').textContent = oid;
+    const isDelivered = result === 'DELIVERED';
+    document.getElementById('podTitle').textContent = isDelivered ? '📋 Proof of Delivery' : '❌ Report Failed Delivery';
+    document.getElementById('podConfirmBtn').textContent = isDelivered ? '✅ Confirm Delivery' : '❌ Confirm Failed';
+    document.getElementById('podConfirmBtn').className = isDelivered ? 'btn btn-primary' : 'btn btn-danger';
+
+    // Reset
+    clearSignature();
+    clearPhoto();
+    document.getElementById('podNotes').value = '';
+    switchPodTab('signature', null);
+    document.querySelectorAll('.pod-tab')[0].classList.add('active');
+    updateProofIndicators();
+
+    document.getElementById('podModal').classList.add('open');
+}
+
+function closePodModal() {
+    document.getElementById('podModal').classList.remove('open');
+    podOrderId = null;
+    podResult = null;
+}
+
+function updateProofIndicators() {
+    document.getElementById('indSig').innerHTML = hasSig
+        ? '<span class="check">✅</span> Signature captured'
+        : '✍️ No signature';
+    document.getElementById('indPhoto').innerHTML = photoBase64
+        ? '<span class="check">✅</span> Photo attached'
+        : '📷 No photo';
+    document.getElementById('sigStatus').textContent = hasSig ? '✅ Signature captured' : 'No signature';
+}
+
+async function submitDeliveryWithProof() {
+    if (!podOrderId) return;
+    const btn = document.getElementById('podConfirmBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Submitting...';
+
+    const payload = {
+        order_id: podOrderId,
+        result: podResult,
+        notes: document.getElementById('podNotes').value || null,
+        signature_data: getSignatureBase64(),
+        photo_data: photoBase64,
+    };
+
     try {
         const r = await fetch(`${API}/api/v1/delivery/update`, {
             method: 'POST', headers: authHeaders(),
-            body: JSON.stringify({ order_id: oid, result: result }),
+            body: JSON.stringify(payload),
         });
         const d = await r.json();
-        showToast(`${oid} → ${result}`, result === 'DELIVERED' ? 'success' : 'error');
+        const proofParts = [];
+        if (payload.signature_data) proofParts.push('signature');
+        if (payload.photo_data) proofParts.push('photo');
+        const proofMsg = proofParts.length ? ` (with ${proofParts.join(' + ')})` : '';
+        showToast(`${podOrderId} → ${podResult}${proofMsg}`, podResult === 'DELIVERED' ? 'success' : 'error');
+        closePodModal();
         setTimeout(loadManifest, 300);
-    } catch (e) { showToast('Failed: ' + e.message, 'error'); }
+    } catch (e) {
+        showToast('Failed: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = podResult === 'DELIVERED' ? '✅ Confirm Delivery' : '❌ Confirm Failed';
+    }
 }
 
-// ── WebSocket ──
+// ══════════════════════════════════════════════════════
+// ── WebSocket ────────────────────────────────────────
+// ══════════════════════════════════════════════════════
 function connectWebSocket() {
     if (ws && ws.readyState === WebSocket.OPEN) return;
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
     ws = new WebSocket(`${proto}//${location.host}/ws/tracking?token=${token}`);
 
-    ws.onopen = () => {
-        setWs(true);
-        console.log('[WS] Connected');
-    };
+    ws.onopen = () => { setWs(true); console.log('[WS] Connected'); };
     ws.onclose = () => {
         setWs(false);
         console.log('[WS] Disconnected. Reconnecting in 3s...');
@@ -262,11 +556,15 @@ function connectWebSocket() {
             const data = JSON.parse(e.data);
             if (data.event_type === 'connected') return;
 
+            // ── Route Change: Special prominent handling ──
+            if (data.event_type === 'route.change') {
+                handleRouteChange(data);
+                addNotif(data);
+                return;
+            }
+
             addNotif(data);
-
-            // ── ANY event triggers debounced manifest reload ──
             if (data.event_type) debouncedReload();
-
             const s = data.status, oid = data.order_id || '';
             if (s === 'DELIVERED')       showToast(`✅ ${oid} delivered!`, 'success');
             else if (s === 'FAILED')     showToast(`❌ ${oid} failed`, 'error');
@@ -288,13 +586,87 @@ function addNotif(data) {
     const list = document.getElementById('notifList');
     if (list.children.length === 1 && list.firstElementChild?.querySelector('.t')?.textContent === 'Waiting...') list.innerHTML = '';
     const n = document.createElement('div');
-    const isAlert = data.status === 'FAILED' || data.status === 'CANCELLED';
+    const isAlert = data.status === 'FAILED' || data.status === 'CANCELLED' || data.event_type === 'route.change';
+    const isRouteChange = data.event_type === 'route.change';
     n.className = `notif ${isAlert ? 'alert' : ''}`;
     n.innerHTML = `<div class="t">${new Date().toLocaleTimeString()}</div>
-        <div><strong>${data.event_type || 'event'}</strong>: ${data.message || JSON.stringify(data)}</div>
-        ${data.order_id ? `<div style="font-size:.75rem;color:var(--text-light);">${data.order_id} → <span class="status-badge status-${data.status}">${data.status||'-'}</span></div>` : ''}`;
+        <div><strong>${isRouteChange ? '🔀 ROUTE CHANGE' : (data.event_type || 'event')}</strong>: ${data.message || JSON.stringify(data)}</div>
+        ${data.order_id ? `<div style="font-size:.75rem;color:var(--text-light);">${data.order_id} → <span class="status-badge status-${data.status || 'PROCESSING'}">${data.status || data.change_type || '-'}</span>${data.priority === 'high' ? ' <span class="priority-badge">HIGH PRIORITY</span>' : ''}</div>` : ''}`;
     list.insertBefore(n, list.firstChild);
     while (list.children.length > 40) list.removeChild(list.lastChild);
+}
+
+// ══════════════════════════════════════════════════════
+// ── Route Change Handler ─────────────────────────────
+// ══════════════════════════════════════════════════════
+let recentRouteChanges = new Set(); // Track recently added order_ids
+
+function handleRouteChange(data) {
+    const isHigh = data.priority === 'high';
+    const overlay = document.getElementById('routeChangeOverlay');
+    const alert = document.getElementById('routeChangeAlert');
+
+    // Set alert content
+    document.getElementById('rcIcon').textContent = isHigh ? '🚨' : '🔀';
+    document.getElementById('rcTitle').textContent = isHigh
+        ? '⚡ HIGH-PRIORITY Route Change!'
+        : 'Route Updated — New Stop Added';
+    document.getElementById('rcMessage').textContent = data.message || 'A new delivery has been added to your route.';
+
+    // Detail section
+    const newStop = data.new_stop || {};
+    const detailEl = document.getElementById('rcDetail');
+    detailEl.innerHTML = `
+        <div class="label">New Delivery${isHigh ? ' — HIGH PRIORITY' : ''}</div>
+        <div style="font-weight:600;">📍 ${newStop.street || 'Unknown'}, ${newStop.city || ''}</div>
+        <div style="font-size:.78rem;color:var(--text-light);margin-top:.3rem;">
+            Order: ${data.order_id || 'N/A'} &middot; ETA: ${newStop.estimated_arrival || 'TBD'}
+            &middot; Route now has <strong>${data.total_stops || '?'}</strong> stops
+        </div>
+    `;
+
+    // Style based on priority
+    alert.className = `route-change-alert ${isHigh ? 'high-priority' : ''}`;
+
+    // Track this order as recently added for highlighting
+    if (data.order_id) recentRouteChanges.add(data.order_id);
+
+    // Show the overlay
+    overlay.classList.add('show');
+
+    // Vibrate if available (mobile)
+    if (navigator.vibrate) {
+        navigator.vibrate(isHigh ? [200, 100, 200, 100, 200] : [200, 100, 200]);
+    }
+
+    // Play a notification beep
+    playNotifSound(isHigh);
+}
+
+function dismissRouteChange() {
+    document.getElementById('routeChangeOverlay').classList.remove('show');
+    loadManifest();
+}
+
+function playNotifSound(urgent) {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = urgent ? 880 : 660;
+        gain.gain.value = 0.3;
+        osc.start();
+        if (urgent) {
+            // Two-tone urgent beep
+            setTimeout(() => { osc.frequency.value = 1100; }, 150);
+            setTimeout(() => { osc.frequency.value = 880; }, 300);
+        }
+        setTimeout(() => { gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5); }, urgent ? 450 : 200);
+        setTimeout(() => { osc.stop(); ctx.close(); }, 1000);
+    } catch(_) {}
 }
 </script>
 </body>

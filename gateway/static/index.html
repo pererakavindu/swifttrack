@@ -191,9 +191,8 @@
                     <div class="form-group"><label>Item Description</label><input type="text" id="itemDesc" placeholder="e.g. Electronics Package"></div>
                     <div class="form-group"><label>Quantity</label><input type="number" id="itemQty" value="1" min="1"></div>
                     <div class="form-group"><label>Weight (kg)</label><input type="number" id="itemWeight" value="1.0" step="0.1" min="0.1"></div>
-                    <div class="full" style="display:flex;gap:1rem;">
-                        <button class="btn btn-primary" onclick="submitOrder(false)">📤 Submit Order</button>
-                        <button class="btn" style="background:#f1f5f9;" onclick="submitOrder(true)">⚡ Submit Async (High Volume)</button>
+                    <div class="full">
+                        <button class="btn btn-primary" onclick="submitOrder()">📤 Submit Order</button>
                     </div>
                 </div>
             </div>
@@ -302,12 +301,13 @@ async function loadOrders() {
         tbody.innerHTML = orders.map(o => {
             const changed = prev[o.order_id] && prev[o.order_id].status !== o.status;
             const isNew = !prev[o.order_id];
+            const priorityBadge = o.priority === 'high' ? '<span style="background:#dc2626;color:white;font-size:.65rem;padding:.1rem .4rem;border-radius:4px;font-weight:700;">HIGH</span>' : (o.priority || '-');
             return `<tr class="${changed || isNew ? 'flash-update' : ''}" data-oid="${o.order_id}">
                 <td><strong>${o.order_id}</strong></td>
                 <td>${o.recipient_name || '-'}</td>
                 <td>${o.delivery_address || '-'}</td>
                 <td><span class="status-badge status-${o.status}">${o.status}</span></td>
-                <td>${o.priority || '-'}</td>
+                <td>${priorityBadge}</td>
                 <td>${o.created_at ? new Date(o.created_at).toLocaleString() : '-'}</td>
             </tr>`;
         }).join('');
@@ -320,7 +320,7 @@ function debouncedReload() {
     reloadTimer = setTimeout(() => loadOrders(), 300);
 }
 
-async function submitOrder(async_mode) {
+async function submitOrder() {
     const order = {
         client_id: userId,
         recipient_name: document.getElementById('recipientName').value,
@@ -335,12 +335,11 @@ async function submitOrder(async_mode) {
     if (!order.recipient_name || !order.delivery_street || !order.delivery_city) {
         showToast('Please fill in all required fields', 'error'); return;
     }
-    const endpoint = async_mode ? '/api/v1/orders/async' : '/api/v1/orders';
     try {
-        const resp = await fetch(`${API}${endpoint}`, { method: 'POST', headers: authHeaders(), body: JSON.stringify(order) });
+        const resp = await fetch(`${API}/api/v1/orders/async`, { method: 'POST', headers: authHeaders(), body: JSON.stringify(order) });
         const data = await resp.json();
-        if (data.status === 'COMPLETED' || data.status === 'QUEUED') {
-            showToast(`Order ${data.order_id || data.saga_id} ${data.status.toLowerCase()}!`, 'success');
+        if (data.status === 'QUEUED') {
+            showToast(`Order queued! You'll see real-time updates as it processes.`, 'success');
             switchTab('orders');
             setTimeout(loadOrders, 300);
         } else {
@@ -406,11 +405,14 @@ function addFeedItem(data) {
     if (data.status === 'DELIVERED') ec = 'delivered';
     else if (data.status === 'FAILED' || data.status === 'CANCELLED') ec = 'failed';
     else if (data.status === 'IN_WAREHOUSE') ec = 'warehouse';
+    else if (data.event_type === 'route.change') ec = 'warehouse'; // amber styling for route changes
+
+    const isRouteChange = data.event_type === 'route.change';
     item.className = `feed-item ${ec}`;
     const time = new Date().toLocaleTimeString();
     item.innerHTML = `<div class="time">${time}</div>
-        <div><strong>${data.event_type || 'event'}</strong>: ${data.message || JSON.stringify(data)}</div>
-        ${data.order_id ? `<div style="font-size:.8rem;color:var(--text-light);">Order: ${data.order_id} | Status: <span class="status-badge status-${data.status}">${data.status||'-'}</span></div>` : ''}`;
+        <div><strong>${isRouteChange ? '🔀 Route Updated' : (data.event_type || 'event')}</strong>: ${data.message || JSON.stringify(data)}</div>
+        ${data.order_id ? `<div style="font-size:.8rem;color:var(--text-light);">Order: ${data.order_id} | Status: <span class="status-badge status-${data.status || 'PROCESSING'}">${data.status || data.change_type || '-'}</span>${data.priority === 'high' ? ' <span style="background:#dc2626;color:white;font-size:.65rem;padding:.1rem .3rem;border-radius:3px;font-weight:700;">HIGH PRIORITY</span>' : ''}</div>` : ''}`;
     feed.insertBefore(item, feed.firstChild);
     while (feed.children.length > 50) feed.removeChild(feed.lastChild);
 }

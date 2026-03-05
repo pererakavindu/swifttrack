@@ -350,11 +350,13 @@ class DeliveryUpdateRequest(BaseModel):
     order_id: str
     result: str
     notes: str | None = None
+    signature_data: str | None = None   # base64 PNG of customer signature
+    photo_data: str | None = None       # base64 JPEG of delivery photo
 
 
 @app.post("/api/v1/delivery/update")
 async def update_delivery(req: DeliveryUpdateRequest, user=Depends(get_current_user)):
-    """Driver marks a delivery as delivered/failed."""
+    """Driver marks a delivery as delivered/failed with optional proof-of-delivery."""
     if user["role"] not in ("driver", "admin"):
         raise HTTPException(403, "Only drivers can update deliveries")
     try:
@@ -365,6 +367,8 @@ async def update_delivery(req: DeliveryUpdateRequest, user=Depends(get_current_u
                 "driver_id": user["sub"],
                 "result": req.result,
                 "notes": req.notes,
+                "signature_data": req.signature_data,
+                "photo_data": req.photo_data,
             },
         )
         return resp.json()
@@ -417,6 +421,45 @@ async def get_route(route_id: str, user=Depends(get_current_user)):
     except Exception as exc:
         logger.error(f"ROS error fetching route {route_id}: {exc}")
         raise HTTPException(502, "Failed to fetch route")
+
+
+@app.get("/api/v1/routes/driver/{driver_id}")
+async def get_driver_routes(driver_id: str, user=Depends(get_current_user)):
+    """Get all routes for a specific driver."""
+    try:
+        resp = await http_client.get(f"{ROS_URL}/api/v1/routes/driver/{driver_id}")
+        return resp.json()
+    except Exception as exc:
+        logger.error(f"ROS error fetching driver routes: {exc}")
+        raise HTTPException(502, "Failed to fetch driver routes")
+
+
+@app.post("/api/v1/routes/{route_id}/add-stop")
+async def add_stop_to_route(route_id: str, req: dict, user=Depends(get_current_user)):
+    """Add a new stop to an existing route (admin/system use)."""
+    if user["role"] not in ("admin",):
+        raise HTTPException(403, "Admin only")
+    try:
+        resp = await http_client.post(
+            f"{ROS_URL}/api/v1/routes/{route_id}/add-stop", json=req
+        )
+        return resp.json()
+    except Exception as exc:
+        logger.error(f"ROS error adding stop: {exc}")
+        raise HTTPException(502, "Failed to add stop to route")
+
+
+@app.post("/api/v1/routes/re-optimize")
+async def re_optimize_routes(req: dict, user=Depends(get_current_user)):
+    """Re-optimise routes for a driver (admin/system use)."""
+    if user["role"] not in ("admin",):
+        raise HTTPException(403, "Admin only")
+    try:
+        resp = await http_client.post(f"{ROS_URL}/api/v1/routes/re-optimize", json=req)
+        return resp.json()
+    except Exception as exc:
+        logger.error(f"ROS error re-optimising: {exc}")
+        raise HTTPException(502, "Failed to re-optimise routes")
 
 
 # ── Driver Manifest ───────────────────────────────────
