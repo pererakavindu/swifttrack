@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SwiftTrack - Admin Dashboard</title>
+    <style>
+        :root {
+            --primary: #7c3aed;
+            --primary-dark: #6d28d9;
+            --success: #16a34a;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --bg: #f5f3ff;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
+
+        .header { background: var(--primary); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,.15); }
+        .header h1 { font-size: 1.4rem; }
+        .header .logo { display: flex; align-items: center; gap: .6rem; }
+        .header .logo svg { width: 28px; height: 28px; }
+        .header .user-info { display: flex; align-items: center; gap: 1rem; }
+        .header .user-info span { font-size: .9rem; opacity: .9; }
+        .ws-status { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .ws-status.connected { background: #4ade80; box-shadow: 0 0 6px #4ade80; }
+        .ws-status.disconnected { background: #f87171; }
+        .btn { padding: .5rem 1.2rem; border: none; border-radius: 6px; font-size: .85rem; cursor: pointer; transition: all .2s; font-weight: 500; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-sm { padding: .3rem .8rem; font-size: .8rem; }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 1.5rem; }
+
+        .login-container { display: flex; justify-content: center; align-items: center; min-height: 80vh; }
+        .login-card { background: var(--card); padding: 2.5rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,.08); width: 380px; }
+        .login-card h2 { margin-bottom: 1.5rem; text-align: center; }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: .3rem; font-size: .85rem; color: var(--text-light); font-weight: 500; }
+        .form-group input { width: 100%; padding: .6rem; border: 1px solid var(--border); border-radius: 6px; font-size: .9rem; }
+        .form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(124,58,237,.1); }
+        .login-card .btn { width: 100%; padding: .7rem; font-size: 1rem; }
+        .login-hint { margin-top: 1rem; font-size: .8rem; color: var(--text-light); text-align: center; }
+
+        .dashboard { display: none; }
+        .dashboard.active { display: block; }
+
+        .tabs { display: flex; gap: .5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); padding-bottom: .5rem; }
+        .tab { padding: .5rem 1.2rem; border: none; background: none; cursor: pointer; font-size: .9rem; color: var(--text-light); border-radius: 6px 6px 0 0; transition: .2s; }
+        .tab.active { background: var(--primary); color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .card { background: var(--card); border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,.05); padding: 1.5rem; margin-bottom: 1rem; border: 1px solid var(--border); }
+        .card h3 { font-size: 1rem; margin-bottom: 1rem; color: var(--primary); }
+
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th, .data-table td { padding: .6rem .8rem; text-align: left; border-bottom: 1px solid var(--border); font-size: .85rem; }
+        .data-table th { background: var(--bg); font-weight: 600; color: var(--text-light); }
+
+        .status-badge { padding: .2rem .6rem; border-radius: 12px; font-size: .75rem; font-weight: 600; }
+        .status-ACCEPTED, .status-PROCESSING { background: #dbeafe; color: #1d4ed8; }
+        .status-IN_WAREHOUSE { background: #fef3c7; color: #b45309; }
+        .status-IN_TRANSIT, .status-LOADED { background: #d1fae5; color: #059669; }
+        .status-DELIVERED { background: #16a34a; color: white; }
+        .status-FAILED, .status-CANCELLED { background: #fee2e2; color: #dc2626; }
+        .status-PENDING, .status-QUEUED { background: #f1f5f9; color: #64748b; }
+
+        @keyframes rowFlash { 0% { background: #ede9fe; } 100% { background: transparent; } }
+        .data-table tr.flash-update { animation: rowFlash 2s ease-out; }
+
+        @keyframes statPulse { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+        .stat-card .value.pulse { animation: statPulse .4s ease; }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-card { background: var(--card); border-radius: 10px; padding: 1.2rem; text-align: center; border: 1px solid var(--border); }
+        .stat-card .value { font-size: 2rem; font-weight: 700; color: var(--primary); transition: transform .3s; }
+        .stat-card .label { font-size: .8rem; color: var(--text-light); margin-top: .3rem; }
+
+        .live-feed { max-height: 400px; overflow-y: auto; }
+        .feed-item { padding: .6rem; border-left: 3px solid var(--primary); margin-bottom: .5rem; background: var(--bg); border-radius: 0 6px 6px 0; font-size: .85rem; animation: feedSlide .3s ease; }
+        @keyframes feedSlide { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        .feed-item .time { color: var(--text-light); font-size: .75rem; }
+        .feed-item.delivered { border-left-color: var(--success); }
+        .feed-item.failed { border-left-color: var(--danger); }
+        .feed-item.warehouse { border-left-color: var(--warning); }
+
+        .live-badge { display: inline-flex; align-items: center; gap: 4px; font-size: .7rem; font-weight: 700; color: #16a34a; text-transform: uppercase; letter-spacing: .05em; }
+        .live-badge .dot { width: 6px; height: 6px; background: #16a34a; border-radius: 50%; animation: livePulse 1.5s infinite; }
+        @keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+        .toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 1000; }
+        .toast { background: var(--card); padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,.15); margin-bottom: .5rem; animation: slideIn .3s ease; border-left: 4px solid var(--primary); max-width: 350px; }
+        .toast.success { border-left-color: var(--success); }
+        .toast.error { border-left-color: var(--danger); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+        .service-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; }
+        .service-card { background: var(--card); border-radius: 10px; padding: 1rem; border: 1px solid var(--border); }
+        .service-card .svc-name { font-weight: 600; font-size: .9rem; margin-bottom: .4rem; }
+        .service-card .svc-detail { font-size: .8rem; color: var(--text-light); }
+        .service-card .svc-status { display: inline-block; padding: .15rem .5rem; border-radius: 10px; font-size: .72rem; font-weight: 600; margin-top: .4rem; }
+        .service-card .svc-status.ok { background: #d1fae5; color: #059669; }
+        .service-card .svc-status.err { background: #fee2e2; color: #dc2626; }
+
+        .filter-bar { display: flex; gap: .8rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+        .filter-bar select, .filter-bar input { padding: .4rem .6rem; border: 1px solid var(--border); border-radius: 6px; font-size: .85rem; }
+    </style>
+</head>
+<body>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Login Screen -->
+<div id="loginScreen">
+    <div class="header">
+        <div class="logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <h1>SwiftTrack</h1>
+        </div>
+        <span style="opacity:.8">Admin Dashboard</span>
+    </div>
+    <div class="login-container">
+        <div class="login-card">
+            <h2>Admin Sign In</h2>
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="loginUsername" placeholder="admin" value="admin">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="Password" value="admin123">
+            </div>
+            <button class="btn btn-primary" onclick="login()">Sign In</button>
+            <p class="login-hint">Admin account: admin / admin123</p>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" class="dashboard">
+    <div class="header">
+        <div class="logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <h1>SwiftTrack Admin</h1>
+        </div>
+        <div class="user-info">
+            <span class="ws-status disconnected" id="wsStatus" title="WebSocket status"></span>
+            <span class="live-badge" id="liveBadge" style="display:none;"><span class="dot"></span> LIVE</span>
+            <span id="userName"></span>
+            <button class="btn btn-danger btn-sm" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card"><div class="value" id="statOrders">0</div><div class="label">Total Orders</div></div>
+            <div class="stat-card"><div class="value" id="statProcessing">0</div><div class="label">Processing</div></div>
+            <div class="stat-card"><div class="value" id="statDelivered">0</div><div class="label">Delivered</div></div>
+            <div class="stat-card"><div class="value" id="statFailed">0</div><div class="label">Failed</div></div>
+            <div class="stat-card"><div class="value" id="statClients">0</div><div class="label">Clients</div></div>
+            <div class="stat-card"><div class="value" id="statRoutes">0</div><div class="label">Routes</div></div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('orders', event)">All Orders</button>
+            <button class="tab" onclick="switchTab('clients', event)">Clients</button>
+            <button class="tab" onclick="switchTab('routes', event)">Routes</button>
+            <button class="tab" onclick="switchTab('services', event)">Services</button>
+            <button class="tab" onclick="switchTab('events', event)">Live Events</button>
+        </div>
+
+        <!-- All Orders Tab -->
+        <div class="tab-content active" id="tab-orders">
+            <div class="card">
+                <h3>All Orders
+                    <button class="btn btn-sm btn-primary" style="margin-left:1rem;" onclick="loadAllOrders()">Refresh</button>
+                </h3>
+                <div class="filter-bar">
+                    <select id="filterStatus" onchange="renderOrders()">
+                        <option value="">All Statuses</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="ACCEPTED">Accepted</option>
+                        <option value="IN_WAREHOUSE">In Warehouse</option>
+                        <option value="PROCESSING">Processing</option>
+                        <option value="DELIVERED">Delivered</option>
+                        <option value="FAILED">Failed</option>
+                        <option value="CANCELLED">Cancelled</option>
+                    </select>
+                    <select id="filterClient" onchange="renderOrders()">
+                        <option value="">All Clients</option>
+                    </select>
+                    <input type="text" id="filterSearch" placeholder="Search order ID..." oninput="renderOrders()">
+                </div>
+                <table class="data-table">
+                    <thead><tr><th>Order ID</th><th>Client</th><th>Recipient</th><th>Address</th><th>Status</th><th>Driver</th><th>Priority</th><th>Created</th></tr></thead>
+                    <tbody id="ordersBody">
+                        <tr><td colspan="8" style="text-align:center;color:var(--text-light);">Loading orders...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Clients Tab -->
+        <div class="tab-content" id="tab-clients">
+            <div class="card">
+                <h3>Registered Clients
+                    <button class="btn btn-sm btn-primary" style="margin-left:1rem;" onclick="loadClients()">Refresh</button>
+                </h3>
+                <table class="data-table">
+                    <thead><tr><th>Client ID</th><th>Company Name</th><th>Email</th><th>Contract</th><th>Billing Rate</th></tr></thead>
+                    <tbody id="clientsBody">
+                        <tr><td colspan="5" style="text-align:center;color:var(--text-light);">Loading clients...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Routes Tab -->
+        <div class="tab-content" id="tab-routes">
+            <div class="card">
+                <h3>Computed Routes
+                    <button class="btn btn-sm btn-primary" style="margin-left:1rem;" onclick="loadRoutes()">Refresh</button>
+                </h3>
+                <div id="routesContainer">
+                    <p style="color:var(--text-light);font-size:.85rem;">Loading routes...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Services Tab -->
+        <div class="tab-content" id="tab-services">
+            <div class="card">
+                <h3>Service Health
+                    <button class="btn btn-sm btn-primary" style="margin-left:1rem;" onclick="checkServices()">Refresh</button>
+                </h3>
+                <div class="service-grid" id="servicesGrid">
+                    <p style="color:var(--text-light);font-size:.85rem;">Checking services...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Events Tab -->
+        <div class="tab-content" id="tab-events">
+            <div class="card">
+                <h3>Real-Time Event Stream
+                    <span class="ws-status" id="wsStatus2"></span>
+                    <span class="live-badge" id="liveBadge2" style="display:none;"><span class="dot"></span> LIVE</span>
+                </h3>
+                <div class="live-feed" id="liveFeed">
+                    <div class="feed-item"><div class="time">Waiting for events...</div><div>Connect to receive real-time updates from all services</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let token = null, userId = null, userName = null;
+let ws = null, keepAliveTimer = null, reloadTimer = null;
+let allOrders = [];
+let allClients = [];
+const API = '';
+
+function showToast(message, type = 'info') {
+    const c = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<strong>${type === 'success' ? 'OK' : type === 'error' ? 'Error' : 'Info'}:</strong> ${message}`;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 5000);
+}
+
+async function login() {
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+    try {
+        const resp = await fetch(`${API}/api/v1/auth/login`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+        });
+        if (!resp.ok) throw new Error('Invalid credentials');
+        const data = await resp.json();
+        if (data.role !== 'admin') throw new Error('This dashboard is for admin users only');
+        token = data.access_token; userId = data.user_id; userName = data.name;
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('dashboard').classList.add('active');
+        document.getElementById('userName').textContent = `${userName} (${userId})`;
+        connectWebSocket();
+        loadAllData();
+        showToast(`Welcome, ${userName}`, 'success');
+    } catch (err) { showToast(err.message, 'error'); }
+}
+
+function logout() {
+    token = null;
+    if (ws) { ws.onclose = null; ws.close(); ws = null; }
+    if (keepAliveTimer) clearInterval(keepAliveTimer);
+    document.getElementById('loginScreen').style.display = '';
+    document.getElementById('dashboard').classList.remove('active');
+}
+
+function authHeaders() {
+    return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+}
+
+function switchTab(tab, evt) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    if (evt && evt.target) evt.target.classList.add('active');
+    document.getElementById(`tab-${tab}`).classList.add('active');
+}
+
+function updateStat(id, val) {
+    const el = document.getElementById(id);
+    const old = parseInt(el.textContent) || 0;
+    if (old !== val) {
+        el.textContent = val;
+        el.classList.remove('pulse');
+        void el.offsetWidth;
+        el.classList.add('pulse');
+    }
+}
+
+// ── Load all data on login ──
+async function loadAllData() {
+    await Promise.all([loadAllOrders(), loadClients(), loadRoutes(), checkServices()]);
+}
+
+// ── Orders ──
+async function loadAllOrders() {
+    try {
+        const resp = await fetch(`${API}/api/v1/orders/all`, { headers: authHeaders() });
+        const data = await resp.json();
+        allOrders = data.orders || [];
+
+        // populate client filter dropdown
+        const clientIds = [...new Set(allOrders.map(o => o.client_id).filter(Boolean))];
+        const filterEl = document.getElementById('filterClient');
+        const current = filterEl.value;
+        filterEl.innerHTML = '<option value="">All Clients</option>' +
+            clientIds.map(c => `<option value="${c}">${c}</option>`).join('');
+        filterEl.value = current;
+
+        renderOrders();
+        updateOrderStats();
+    } catch (err) { showToast('Failed to load orders: ' + err.message, 'error'); }
+}
+
+function updateOrderStats() {
+    updateStat('statOrders', allOrders.length);
+    updateStat('statProcessing', allOrders.filter(o => ['PROCESSING','IN_WAREHOUSE','IN_TRANSIT','ACCEPTED','LOADED','PENDING'].includes(o.status)).length);
+    updateStat('statDelivered', allOrders.filter(o => o.status === 'DELIVERED').length);
+    updateStat('statFailed', allOrders.filter(o => ['FAILED','CANCELLED'].includes(o.status)).length);
+}
+
+function renderOrders() {
+    const statusFilter = document.getElementById('filterStatus').value;
+    const clientFilter = document.getElementById('filterClient').value;
+    const search = document.getElementById('filterSearch').value.toLowerCase();
+
+    let filtered = allOrders;
+    if (statusFilter) filtered = filtered.filter(o => o.status === statusFilter);
+    if (clientFilter) filtered = filtered.filter(o => o.client_id === clientFilter);
+    if (search) filtered = filtered.filter(o => (o.order_id || '').toLowerCase().includes(search));
+
+    const tbody = document.getElementById('ordersBody');
+    if (!filtered.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-light);">No orders match the current filters</td></tr>';
+        return;
+    }
+    tbody.innerHTML = filtered.map(o => `<tr>
+        <td><strong>${o.order_id || '-'}</strong></td>
+        <td>${o.client_id || '-'}</td>
+        <td>${o.recipient_name || '-'}</td>
+        <td>${o.delivery_address || '-'}</td>
+        <td><span class="status-badge status-${o.status || ''}">${o.status || '-'}</span></td>
+        <td>${o.driver_id || '-'}</td>
+        <td>${o.priority || '-'}</td>
+        <td>${o.created_at ? new Date(o.created_at).toLocaleString() : '-'}</td>
+    </tr>`).join('');
+}
+
+// ── Clients ──
+async function loadClients() {
+    try {
+        const resp = await fetch(`${API}/api/v1/clients`, { headers: authHeaders() });
+        const data = await resp.json();
+        allClients = data.clients || [];
+        updateStat('statClients', allClients.length);
+
+        const tbody = document.getElementById('clientsBody');
+        if (!allClients.length) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-light);">No clients found</td></tr>';
+            return;
+        }
+        tbody.innerHTML = allClients.map(c => `<tr>
+            <td><strong>${c.client_id}</strong></td>
+            <td>${c.company_name}</td>
+            <td>${c.contact_email}</td>
+            <td>${c.contract_type}</td>
+            <td>Rs. ${c.billing_rate}</td>
+        </tr>`).join('');
+    } catch (err) { showToast('Failed to load clients: ' + err.message, 'error'); }
+}
+
+// ── Routes ──
+async function loadRoutes() {
+    try {
+        const resp = await fetch(`${API}/api/v1/routes`, { headers: authHeaders() });
+        const data = await resp.json();
+        const routes = data.routes || [];
+        updateStat('statRoutes', routes.length);
+
+        const container = document.getElementById('routesContainer');
+        if (!routes.length) {
+            container.innerHTML = '<p style="color:var(--text-light);font-size:.85rem;">No routes computed yet. Submit orders to generate routes.</p>';
+            return;
+        }
+        container.innerHTML = routes.map(r => `
+            <div class="card" style="margin-bottom:.8rem;">
+                <h3>Route: ${r.route_id}</h3>
+                <div style="font-size:.85rem;color:var(--text-light);margin-bottom:.6rem;">
+                    Driver: <strong>${r.driver_id}</strong> | Vehicle: <strong>${r.vehicle_id}</strong> |
+                    Distance: <strong>${r.total_distance_km} km</strong> |
+                    Est. Duration: <strong>${r.estimated_duration_min} min</strong>
+                </div>
+                <table class="data-table">
+                    <thead><tr><th>Seq</th><th>Order ID</th><th>Street</th><th>City</th><th>ETA</th><th>Distance</th></tr></thead>
+                    <tbody>
+                        ${(r.stops || []).map(s => `<tr>
+                            <td>${s.sequence}</td>
+                            <td><strong>${s.order_id}</strong></td>
+                            <td>${s.street || '-'}</td>
+                            <td>${s.city || '-'}</td>
+                            <td>${s.estimated_arrival || '-'}</td>
+                            <td>${s.distance_from_prev_km} km</td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `).join('');
+    } catch (err) { showToast('Failed to load routes: ' + err.message, 'error'); }
+}
+
+// ── Service Health ──
+async function checkServices() {
+    const services = [
+        { name: 'API Gateway', url: '/health', port: 8000 },
+        { name: 'Orchestrator', url: '/health', port: 8001, internal: true },
+        { name: 'CMS Adapter', url: '/health', port: 8002, internal: true },
+        { name: 'ROS', url: '/health', port: 8003, internal: true },
+        { name: 'WMS Adapter', url: '/health', port: 8004, internal: true },
+    ];
+
+    const grid = document.getElementById('servicesGrid');
+    grid.innerHTML = '';
+
+    for (const svc of services) {
+        const card = document.createElement('div');
+        card.className = 'service-card';
+        let status = 'Checking...';
+        let ok = false;
+
+        try {
+            const url = svc.internal ? `${API}${svc.url}` : `${API}${svc.url}`;
+            const resp = await fetch(url, { headers: authHeaders() });
+            if (resp.ok) {
+                const data = await resp.json();
+                status = data.status || 'ok';
+                ok = true;
+            } else {
+                status = `HTTP ${resp.status}`;
+            }
+        } catch (e) {
+            status = 'Unreachable';
+        }
+
+        card.innerHTML = `
+            <div class="svc-name">${svc.name}</div>
+            <div class="svc-detail">Port: ${svc.port}</div>
+            <span class="svc-status ${ok ? 'ok' : 'err'}">${ok ? 'Healthy' : status}</span>
+        `;
+        grid.appendChild(card);
+    }
+
+    // Add infrastructure services info (not directly reachable from browser)
+    const infraServices = [
+        { name: 'RabbitMQ', port: '5672 / 15672', detail: 'Message Broker (AMQP)' },
+        { name: 'Redis', port: '6379', detail: 'Cache / State Store / Pub/Sub' },
+        { name: 'Mock CMS', port: '8005', detail: 'SOAP/XML Legacy System' },
+        { name: 'Mock WMS', port: '9000', detail: 'TCP/IP Proprietary Protocol' },
+    ];
+    for (const svc of infraServices) {
+        const card = document.createElement('div');
+        card.className = 'service-card';
+        card.innerHTML = `
+            <div class="svc-name">${svc.name}</div>
+            <div class="svc-detail">Port: ${svc.port}</div>
+            <div class="svc-detail">${svc.detail}</div>
+            <span class="svc-status ok">Infrastructure</span>
+        `;
+        grid.appendChild(card);
+    }
+}
+
+// ── Debounced reload on WS events ──
+function debouncedReload() {
+    if (reloadTimer) clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(() => loadAllOrders(), 400);
+}
+
+// ── WebSocket ──
+function connectWebSocket() {
+    if (ws && ws.readyState === WebSocket.OPEN) return;
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    ws = new WebSocket(`${proto}//${location.host}/ws/tracking?token=${token}`);
+
+    ws.onopen = () => {
+        setWsStatus(true);
+    };
+    ws.onclose = () => {
+        setWsStatus(false);
+        if (token) setTimeout(connectWebSocket, 3000);
+    };
+    ws.onmessage = (e) => {
+        try {
+            const data = JSON.parse(e.data);
+            if (data.event_type === 'connected') return;
+
+            addFeedItem(data);
+
+            if (data.event_type) debouncedReload();
+
+            const s = data.status;
+            const oid = data.order_id || '';
+            if (s === 'DELIVERED')          showToast(`Order ${oid} delivered`, 'success');
+            else if (s === 'FAILED')        showToast(`Order ${oid} failed`, 'error');
+            else if (s === 'ACCEPTED')      showToast(`Order ${oid} accepted`, 'success');
+            else if (s === 'IN_WAREHOUSE')  showToast(`Order ${oid} in warehouse`, 'info');
+            else if (s === 'PROCESSING')    showToast(`Order ${oid} route optimised`, 'info');
+        } catch (_) {}
+    };
+
+    if (keepAliveTimer) clearInterval(keepAliveTimer);
+    keepAliveTimer = setInterval(() => { if (ws?.readyState === WebSocket.OPEN) ws.send('ping'); }, 25000);
+}
+
+function setWsStatus(connected) {
+    const cls = connected ? 'ws-status connected' : 'ws-status disconnected';
+    document.getElementById('wsStatus').className = cls;
+    document.getElementById('wsStatus2').className = cls;
+    document.getElementById('liveBadge').style.display = connected ? 'inline-flex' : 'none';
+    document.getElementById('liveBadge2').style.display = connected ? 'inline-flex' : 'none';
+}
+
+function addFeedItem(data) {
+    const feed = document.getElementById('liveFeed');
+    if (feed.children.length === 1 && feed.firstElementChild?.querySelector('.time')?.textContent === 'Waiting for events...') feed.innerHTML = '';
+    const item = document.createElement('div');
+    let ec = '';
+    if (data.status === 'DELIVERED') ec = 'delivered';
+    else if (data.status === 'FAILED' || data.status === 'CANCELLED') ec = 'failed';
+    else if (data.status === 'IN_WAREHOUSE') ec = 'warehouse';
+    item.className = `feed-item ${ec}`;
+    const time = new Date().toLocaleTimeString();
+    item.innerHTML = `<div class="time">${time}</div>
+        <div><strong>${data.event_type || 'event'}</strong>: ${data.message || JSON.stringify(data)}</div>
+        ${data.order_id ? `<div style="font-size:.8rem;color:var(--text-light);">Order: ${data.order_id} | Client: ${data.client_id || '-'} | Status: <span class="status-badge status-${data.status}">${data.status || '-'}</span></div>` : ''}`;
+    feed.insertBefore(item, feed.firstChild);
+    while (feed.children.length > 100) feed.removeChild(feed.lastChild);
+}
+</script>
+</body>
+</html>

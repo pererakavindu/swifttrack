@@ -375,6 +375,19 @@ async def update_delivery(req: DeliveryUpdateRequest, user=Depends(get_current_u
 
 # ── Client Info (proxied to CMS Adapter) ──────────────
 
+@app.get("/api/v1/orders/all")
+async def get_all_orders(user=Depends(get_current_user)):
+    """Get all orders across all clients (admin only)."""
+    if user["role"] != "admin":
+        raise HTTPException(403, "Admin only")
+    try:
+        resp = await http_client.get(f"{ORCHESTRATOR_URL}/api/v1/orders/all")
+        return resp.json()
+    except Exception as exc:
+        logger.error(f"Orchestrator error fetching all orders: {exc}")
+        raise HTTPException(502, "Failed to fetch all orders")
+
+
 @app.get("/api/v1/clients")
 async def list_clients(user=Depends(get_current_user)):
     if user["role"] != "admin":
@@ -566,6 +579,15 @@ async def driver_page():
     if driver_path.exists():
         return driver_path.read_text()
     return HTMLResponse("<h1>SwiftTrack Driver App</h1><p>UI not deployed.</p>")
+
+
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_page():
+    """Serve the Admin Dashboard UI."""
+    admin_path = static_dir / "admin.html"
+    if admin_path.exists():
+        return admin_path.read_text()
+    return HTMLResponse("<h1>SwiftTrack Admin</h1><p>UI not deployed.</p>")
 
 
 if __name__ == "__main__":

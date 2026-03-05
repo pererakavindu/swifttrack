@@ -84,10 +84,10 @@
 
 <!-- Login -->
 <div id="loginScreen">
-    <div class="header"><h1>🚚 SwiftTrack Driver</h1></div>
+    <div class="header"><h1>SwiftTrack Driver</h1></div>
     <div class="login-wrap">
         <div class="login-card">
-            <h2>🔐 Driver Sign-In</h2>
+            <h2>Driver Sign-In</h2>
             <div class="form-group"><label>Username</label><input id="loginUser" value="driver1" placeholder="e.g. driver1"></div>
             <div class="form-group"><label>Password</label><input id="loginPass" type="password" value="pass123"></div>
             <button class="btn btn-primary" onclick="login()">Sign In</button>
@@ -100,7 +100,7 @@
 <div id="dashboard" class="dashboard">
     <div class="header">
         <div style="display:flex;align-items:center;gap:.5rem;">
-            <h1>🚚 SwiftTrack</h1>
+            <h1>SwiftTrack</h1>
             <span class="live-badge" id="liveBadge" style="display:none;"><span class="dot"></span> LIVE</span>
         </div>
         <div class="header-right">
@@ -117,12 +117,12 @@
     </div>
 
     <div class="section">
-        <h3>📍 Delivery Manifest</h3>
+        <h3>Delivery Manifest</h3>
         <div id="manifest"><p style="color:var(--text-light);font-size:.85rem;">Loading manifest...</p></div>
     </div>
 
     <div class="section">
-        <h3>📡 Notifications</h3>
+        <h3>Notifications</h3>
         <div class="notif-list" id="notifList">
             <div class="notif"><div class="t">Waiting...</div><div>Events will appear here in real-time</div></div>
         </div>
@@ -210,13 +210,13 @@ async function loadManifest() {
             const flash = changed ? 'flash' : '';
             return `<div class="stop-card ${cls} ${flash}" data-oid="${s.order_id}">
                 <div class="oid">Stop ${i+1}: ${s.order_id}</div>
-                <div class="addr">📍 ${s.delivery_address || 'Address pending'}</div>
+                <div class="addr">${s.delivery_address || 'Address pending'}</div>
                 <div class="bottom">
                     <span class="status-badge status-${s.status}">${s.status}</span>
                     ${s.status !== 'DELIVERED' && s.status !== 'FAILED' ? `
                         <div>
-                            <button class="btn btn-primary btn-sm" onclick="confirmDelivery('${s.order_id}','DELIVERED')">✅ Delivered</button>
-                            <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;" onclick="confirmDelivery('${s.order_id}','FAILED')">❌ Failed</button>
+                            <button class="btn btn-primary btn-sm" onclick="confirmDelivery('${s.order_id}','DELIVERED')">Delivered</button>
+                            <button class="btn btn-sm" style="background:#fee2e2;color:#dc2626;" onclick="confirmDelivery('${s.order_id}','FAILED')">Failed</button>
                         </div>` : ''}
                 </div>
             </div>`;
@@ -268,10 +268,10 @@ function connectWebSocket() {
             if (data.event_type) debouncedReload();
 
             const s = data.status, oid = data.order_id || '';
-            if (s === 'DELIVERED')       showToast(`✅ ${oid} delivered!`, 'success');
-            else if (s === 'FAILED')     showToast(`❌ ${oid} failed`, 'error');
-            else if (s === 'IN_TRANSIT') showToast(`🚚 ${oid} in transit`, 'info');
-            else if (s === 'IN_WAREHOUSE') showToast(`📦 ${oid} in warehouse`, 'info');
+            if (s === 'DELIVERED')       showToast(`${oid} delivered!`, 'success');
+            else if (s === 'FAILED')     showToast(`${oid} failed`, 'error');
+            else if (s === 'IN_TRANSIT') showToast(`${oid} in transit`, 'info');
+            else if (s === 'IN_WAREHOUSE') showToast(`${oid} in warehouse`, 'info');
         } catch(_) {}
     };
 

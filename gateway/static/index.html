@@ -122,7 +122,7 @@
     </div>
     <div class="login-container">
         <div class="login-card">
-            <h2>🔐 Sign In</h2>
+            <h2>Sign In</h2>
             <div class="form-group">
                 <label>Username</label>
                 <input type="text" id="loginUsername" placeholder="e.g. megamart" value="megamart">
@@ -160,15 +160,15 @@
         </div>
 
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('orders', event)">📦 My Orders</button>
-            <button class="tab" onclick="switchTab('neworder', event)">➕ New Order</button>
-            <button class="tab" onclick="switchTab('tracking', event)">📡 Live Tracking</button>
+            <button class="tab active" onclick="switchTab('orders', event)">My Orders</button>
+            <button class="tab" onclick="switchTab('neworder', event)">New Order</button>
+            <button class="tab" onclick="switchTab('tracking', event)">Live Tracking</button>
         </div>
 
         <div class="tab-content active" id="tab-orders">
             <div class="card">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-                    <h3>📋 Order History <span class="live-badge" id="liveBadge" style="display:none;"><span class="dot"></span> LIVE</span></h3>
+                    <h3>Order History <span class="live-badge" id="liveBadge" style="display:none;"><span class="dot"></span> LIVE</span></h3>
                 </div>
                 <table class="orders-table">
                     <thead><tr><th>Order ID</th><th>Recipient</th><th>Address</th><th>Status</th><th>Priority</th><th>Created</th></tr></thead>
@@ -181,7 +181,7 @@
 
         <div class="tab-content" id="tab-neworder">
             <div class="card">
-                <h3>📝 Submit New Delivery Order</h3>
+                <h3>Submit New Delivery Order</h3>
                 <div class="form-grid">
                     <div class="form-group"><label>Recipient Name</label><input type="text" id="recipientName" placeholder="e.g. John Doe"></div>
                     <div class="form-group"><label>Priority</label><select id="priority"><option value="normal">Normal</option><option value="express">Express</option></select></div>
@@ -192,8 +192,8 @@
                     <div class="form-group"><label>Quantity</label><input type="number" id="itemQty" value="1" min="1"></div>
                     <div class="form-group"><label>Weight (kg)</label><input type="number" id="itemWeight" value="1.0" step="0.1" min="0.1"></div>
                     <div class="full" style="display:flex;gap:1rem;">
-                        <button class="btn btn-primary" onclick="submitOrder(false)">📤 Submit Order</button>
-                        <button class="btn" style="background:#f1f5f9;" onclick="submitOrder(true)">⚡ Submit Async (High Volume)</button>
+                        <button class="btn btn-primary" onclick="submitOrder(false)">Submit Order</button>
+                        <button class="btn" style="background:#f1f5f9;" onclick="submitOrder(true)">Submit Async (High Volume)</button>
                     </div>
                 </div>
             </div>
@@ -201,7 +201,7 @@
 
         <div class="tab-content" id="tab-tracking">
             <div class="card">
-                <h3>📡 Real-Time Event Feed <span class="ws-status" id="wsStatus2"></span> <span class="live-badge" id="liveBadge2" style="display:none;"><span class="dot"></span> LIVE</span></h3>
+                <h3>Real-Time Event Feed <span class="ws-status" id="wsStatus2"></span> <span class="live-badge" id="liveBadge2" style="display:none;"><span class="dot"></span> LIVE</span></h3>
                 <div class="live-feed" id="liveFeed">
                     <div class="feed-item"><div class="time">Waiting for events...</div><div>Connect to receive real-time order updates</div></div>
                 </div>
@@ -220,7 +220,7 @@ function showToast(message, type = 'info') {
     const c = document.getElementById('toastContainer');
     const t = document.createElement('div');
     t.className = `toast ${type}`;
-    t.innerHTML = `<strong>${type==='success'?'✅':type==='error'?'❌':'ℹ️'}</strong> ${message}`;
+    t.innerHTML = `<strong>${type==='success'?'OK':type==='error'?'Error':'Info'}</strong> ${message}`;
     c.appendChild(t);
     setTimeout(() => t.remove(), 5000);
 }
@@ -377,11 +377,11 @@ function connectWebSocket() {
             // ── Status-specific toasts ──
             const s = data.status;
             const oid = data.order_id || '';
-            if (s === 'DELIVERED')      showToast(`📦 Order ${oid} delivered!`, 'success');
-            else if (s === 'FAILED')    showToast(`⚠️ Order ${oid} delivery failed`, 'error');
-            else if (s === 'ACCEPTED')  showToast(`✅ Order ${oid} accepted`, 'success');
-            else if (s === 'IN_WAREHOUSE') showToast(`🏭 Order ${oid} in warehouse`, 'info');
-            else if (s === 'PROCESSING')   showToast(`🔄 Order ${oid} route optimised`, 'info');
+            if (s === 'DELIVERED')      showToast(`Order ${oid} delivered`, 'success');
+            else if (s === 'FAILED')    showToast(`Order ${oid} delivery failed`, 'error');
+            else if (s === 'ACCEPTED')  showToast(`Order ${oid} accepted`, 'success');
+            else if (s === 'IN_WAREHOUSE') showToast(`Order ${oid} in warehouse`, 'info');
+            else if (s === 'PROCESSING')   showToast(`Order ${oid} route optimised`, 'info');
         } catch (_) {}
     };
 

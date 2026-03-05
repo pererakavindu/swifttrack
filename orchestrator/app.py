@@ -229,6 +229,7 @@ async def execute_order_saga(saga_id: str, req: SubmitOrderRequest) -> dict:
             },
         )
         await redis_client.sadd(f"client:{req.client_id}:orders", real_oid)
+        await redis_client.sadd("allorders", real_oid)
 
         await publish_tracking({
             "event_type": "order.status_change",
@@ -564,6 +565,18 @@ async def get_client_orders(client_id: str):
         if order_data:
             orders.append(order_data)
     return {"client_id": client_id, "orders": orders, "count": len(orders)}
+
+
+@app.get("/api/v1/orders/all")
+async def get_all_orders():
+    """Get all orders across all clients (admin use)."""
+    order_ids = await redis_client.smembers("allorders")
+    orders = []
+    for oid in order_ids:
+        order_data = await redis_client.hgetall(f"order:{oid}")
+        if order_data:
+            orders.append(order_data)
+    return {"orders": orders, "count": len(orders)}
 
 
 @app.post("/api/v1/delivery/update")
