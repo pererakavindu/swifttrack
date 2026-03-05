@@ -169,6 +169,24 @@ async def execute_order_saga(saga_id: str, req: SubmitOrderRequest) -> dict:
     }
     await save_saga(saga_id, saga)
 
+    # Pre-register a placeholder order in Redis so the gateway can
+    # route real-time tracking events to the correct client immediately.
+    placeholder_id = f"SAGA-{saga_id[:8]}"
+    await redis_client.hset(
+        f"order:{placeholder_id}",
+        mapping={
+            "order_id": placeholder_id,
+            "saga_id": saga_id,
+            "client_id": req.client_id,
+            "recipient_name": req.recipient_name,
+            "delivery_address": f"{req.delivery_street}, {req.delivery_city}",
+            "status": "PENDING",
+            "priority": req.priority,
+            "created_at": saga["created_at"],
+        },
+    )
+    await redis_client.sadd(f"client:{req.client_id}:orders", placeholder_id)
+
     # ── Step 1: Create Order in CMS ────────────────────
     try:
         logger.info(f"[Saga {saga_id}] Step 1: Creating order in CMS...")
@@ -193,15 +211,38 @@ async def execute_order_saga(saga_id: str, req: SubmitOrderRequest) -> dict:
         await save_saga(saga_id, saga)
         logger.info(f"[Saga {saga_id}] CMS order created: {cms_result['order_id']}")
 
+        # Replace placeholder with real CMS order_id in Redis
+        real_oid = cms_result["order_id"]
+        await redis_client.delete(f"order:{placeholder_id}")
+        await redis_client.srem(f"client:{req.client_id}:orders", placeholder_id)
+        await redis_client.hset(
+            f"order:{real_oid}",
+            mapping={
+                "order_id": real_oid,
+                "saga_id": saga_id,
+                "client_id": req.client_id,
+                "recipient_name": req.recipient_name,
+                "delivery_address": f"{req.delivery_street}, {req.delivery_city}",
+                "status": "ACCEPTED",
+                "priority": req.priority,
+                "created_at": saga["created_at"],
+            },
+        )
+        await redis_client.sadd(f"client:{req.client_id}:orders", real_oid)
+
         await publish_tracking({
             "event_type": "order.status_change",
-            "order_id": cms_result["order_id"],
+            "order_id": real_oid,
+            "client_id": req.client_id,
             "status": "ACCEPTED",
             "message": "Order accepted by CMS",
             "timestamp": datetime.utcnow().isoformat(),
         })
 
     except Exception as exc:
+        # Clean up placeholder on failure
+        await redis_client.delete(f"order:{placeholder_id}")
+        await redis_client.srem(f"client:{req.client_id}:orders", placeholder_id)
         saga["state"] = SagaState.FAILED
         saga["error"] = f"CMS step failed: {exc}"
         await save_saga(saga_id, saga)
@@ -227,9 +268,14 @@ async def execute_order_saga(saga_id: str, req: SubmitOrderRequest) -> dict:
         await save_saga(saga_id, saga)
         logger.info(f"[Saga {saga_id}] WMS package received: {wms_result['package_id']}")
 
+        # Update Redis status
+        await redis_client.hset(f"order:{saga['cms_order_id']}", "status", "IN_WAREHOUSE")
+        await redis_client.hset(f"order:{saga['cms_order_id']}", "package_id", saga["wms_package_id"])
+
         await publish_tracking({
             "event_type": "order.status_change",
             "order_id": saga["cms_order_id"],
+            "client_id": req.client_id,
             "status": "IN_WAREHOUSE",
             "message": f"Package {wms_result['package_id']} received in warehouse",
             "timestamp": datetime.utcnow().isoformat(),
@@ -279,9 +325,14 @@ async def execute_order_saga(saga_id: str, req: SubmitOrderRequest) -> dict:
         await save_saga(saga_id, saga)
         logger.info(f"[Saga {saga_id}] Route optimised: {route_id}")
 
+        # Update Redis status
+        await redis_client.hset(f"order:{saga['cms_order_id']}", "status", "PROCESSING")
+        await redis_client.hset(f"order:{saga['cms_order_id']}", "route_id", saga["ros_route_id"] or "")
+
         await publish_tracking({
             "event_type": "order.status_change",
             "order_id": saga["cms_order_id"],
+            "client_id": req.client_id,
             "status": "PROCESSING",
             "message": f"Route optimised. Route ID: {route_id}",
             "timestamp": datetime.utcnow().isoformat(),
@@ -309,26 +360,11 @@ async def execute_order_saga(saga_id: str, req: SubmitOrderRequest) -> dict:
         "timestamp": datetime.utcnow().isoformat(),
     })
 
-    # Store order details in Redis for quick lookups
+    # Assign driver and update final details in Redis
     driver_id = "DRV-001"  # Assigned by ROS optimizer
-    await redis_client.hset(
-        f"order:{saga['cms_order_id']}",
-        mapping={
-            "order_id": saga["cms_order_id"],
-            "client_id": req.client_id,
-            "recipient_name": req.recipient_name,
-            "delivery_address": f"{req.delivery_street}, {req.delivery_city}",
-            "package_id": saga["wms_package_id"],
-            "route_id": saga["ros_route_id"] or "",
-            "driver_id": driver_id,
-            "status": "PROCESSING",
-            "priority": req.priority,
-            "created_at": saga["created_at"],
-        },
-    )
+    await redis_client.hset(f"order:{saga['cms_order_id']}", "driver_id", driver_id)
 
-    # Add to client's order list and driver's order list
-    await redis_client.sadd(f"client:{req.client_id}:orders", saga["cms_order_id"])
+    # Add to driver's order list
     await redis_client.sadd(f"driver:{driver_id}:orders", saga["cms_order_id"])
 
     return saga

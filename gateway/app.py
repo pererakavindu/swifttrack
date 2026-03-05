@@ -161,14 +161,15 @@ async def redis_subscriber():
                     sent_to: set[str] = set()
 
                     # 1. Send to the specific client who owns the order
-                    order_id = data.get("order_id")
-                    if order_id and redis_client:
-                        order_data = await redis_client.hgetall(f"order:{order_id}")
-                        if order_data:
-                            client_id = order_data.get("client_id")
-                            if client_id:
-                                await manager.send_to_user(client_id, data)
-                                sent_to.add(client_id)
+                    client_id = data.get("client_id")  # Prefer from event
+                    if not client_id:
+                        order_id = data.get("order_id")
+                        if order_id and redis_client:
+                            order_data = await redis_client.hgetall(f"order:{order_id}")
+                            client_id = order_data.get("client_id") if order_data else None
+                    if client_id:
+                        await manager.send_to_user(client_id, data)
+                        sent_to.add(client_id)
 
                     # 2. Send to all connected drivers (they need all package/route events)
                     for uid in list(manager.active_connections.keys()):
